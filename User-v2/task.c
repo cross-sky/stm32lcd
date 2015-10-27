@@ -5,12 +5,14 @@
 
 TPC_TASK TaskComps[]=
 {
-	{0, 0, 200,  200, LED1on},			// 5*200=1s   ok
-	{0, 0, 2000,	2000, Pcf8536RT},
-	{0, 0, 200, 200, lcd1621test},
-	{0,	0, 30, 30, KeyTest},
+	{0, 0, 201,  201, LED1on},			// 5*200=1s   ok
+	{0, 0, 2001,	2001, Pcf8536RT},
+	//{0, 0, 200, 200, lcd1621test},
+	{0,	0, 31, 31, UB_Button_KeyIn},
 	{0, 0, 70, 70, MenuLcd},
-	{0, 0, 40, 40, lcd_flood_data}	//must excute at last
+	{0, 0, 20, 20, TBeepOn},//
+	{0, 0, 200, 200, TBgledOn},
+	{0, 0, 51, 51, lcd_flood_data}	//must excute at last
 };
 
 

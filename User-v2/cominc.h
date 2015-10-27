@@ -22,6 +22,7 @@
 #include "stm32_ub_offstatus.h"
 
 #include "Tsystick.h"
+#include "lcd_code.h"
 
 typedef enum {FALSE = 0, TRUE = 1} bool;
 

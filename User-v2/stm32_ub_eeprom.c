@@ -159,11 +159,15 @@ void AT24CxxTest(void)
 	if (i != 6)
 	{
 		AT24CXX_WriteBuff(AT24CXX, reg, wrnum, 6);
-		printf("eeprom fail \r\n");
+#ifdef Debug
+	printf("eeprom fail \r\n");
+#endif
+
 	}
 	else
+#ifdef Debug
 		printf("eeprom success...");
-
+#endif
 }
 
 

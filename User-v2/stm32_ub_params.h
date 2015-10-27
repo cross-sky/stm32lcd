@@ -1,6 +1,8 @@
 #ifndef __STM32_UB_PARAMS
 #define __STM32_UB_PARAMS
 
+#define CoreParamsMax 2
+
 typedef struct
 {
 	uint8_t hour;
@@ -27,14 +29,33 @@ typedef enum
 	PosMin = 8
 }posLight;
 
+typedef struct
+{
+	uint8_t ID;
+	uint8_t isChange;
+	int16_t value;
+	int16_t max;
+	int16_t min;
+}stuCoreParam;
+
+
+
 typedef struct 
 {
 	void (*pfmenu)(void);
 	stuHours clock;
 	stuTimer timer;
+	uint8_t bgledFlag;
+	uint8_t beepFlag;
+	uint8_t lockFlag;
+	stuCoreParam *CoreParam;
+	uint8_t elecFlag;
 }stuLcdParams;
 
 extern stuLcdParams MenuParam;
+extern stuCoreParam NumCoreParam[CoreParamsMax];
+
+
 
 #endif
 

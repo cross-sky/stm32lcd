@@ -458,6 +458,11 @@
               <FileType>1</FileType>
               <FilePath>.\stm32_ub_menu.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32_ub_params.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32_ub_params.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

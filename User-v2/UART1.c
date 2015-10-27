@@ -90,9 +90,9 @@ void UART1_Init(uint32_t bound)
 	UartRxbuf.pbuf = &rx_buffer[0];
 
 //	printf("sysclock: %dMHz \r\n", cycleCounter());
+#ifdef Debug
 	printf("uart1 bound: %d \r\n", bound);
-	
-
+#endif
 }
 
 

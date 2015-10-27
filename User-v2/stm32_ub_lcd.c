@@ -27,7 +27,7 @@ void lcdportInit(void)
 	GPIO_Init(GPIOB,&gpio_init_structure);
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-	gpio_init_structure.GPIO_Pin = GPIO_Pin_11;
+	gpio_init_structure.GPIO_Pin = GPIO_Pin_11|GPIO_Pin_6; // beep and bgled
 	gpio_init_structure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(GPIOA,&gpio_init_structure);
 	LCD_LED_ON;
@@ -170,7 +170,10 @@ void Lcd1621Init(void)
 	lcd_send_command(0x29);//1/2bias，4comm 0x29 1/3bias
 	lcd_send_command(0x03);//启动内部振荡器
 	lcd_send_command(0x01);//打开显示
+
+#ifndef Debug
 	printf("lcd on...\r\n");
+#endif
 }
 
 void lcd1621test(void)
@@ -183,7 +186,7 @@ void lcd1621test(void)
 		i=0;
 		lcd_wr_num(i, j, 0);
 		j++;
-		if (j>3)
+		if (j>2)
 		{
 			j=0;
 		}		
@@ -239,21 +242,9 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[2] |= 0x000a; lcd_buffer[1] |= 0xf000; break;
-			case 1:lcd_buffer[2] |= 0x0000; lcd_buffer[1] |= 0x6000; break;
-			case 2:lcd_buffer[2] |= 0x0006; lcd_buffer[1] |= 0xd000; break;
-			case 3:lcd_buffer[2] |= 0x0004; lcd_buffer[1] |= 0xf000; break;
-			case 4:lcd_buffer[2] |= 0x000c; lcd_buffer[1] |= 0x6000; break;
-			case 5:lcd_buffer[2] |= 0x000c; lcd_buffer[1] |= 0xb000; break;
-			case 6:lcd_buffer[2] |= 0x000e; lcd_buffer[1] |= 0xb000; break;
-			case 7:lcd_buffer[2] |= 0x0000; lcd_buffer[1] |= 0xe000; break;
-			case 8:lcd_buffer[2] |= 0x000e; lcd_buffer[1] |= 0xf000; break;
-			case 9:lcd_buffer[2] |= 0x000c; lcd_buffer[1] |= 0xf000; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[2] |= 0x000a; lcd_buffer[1] |= 0xf000; break;
+			lcd_buffer[2] |= (LCDNumCode[number]>>4);
+			lcd_buffer[1] |= (LCDNumCode[number]<<12);
 			break;
 		}
 
@@ -263,21 +254,8 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[1] |= 0x0af0; break;
-			case 1:lcd_buffer[1] |= 0x0060; break;
-			case 2:lcd_buffer[1] |= 0x06d0; break;
-			case 3:lcd_buffer[1] |= 0x04f0; break;
-			case 4:lcd_buffer[1] |= 0x0c60; break;
-			case 5:lcd_buffer[1] |= 0x0cb0; break;
-			case 6:lcd_buffer[1] |= 0x0eb0; break;
-			case 7:lcd_buffer[1] |= 0x00e0; break;
-			case 8:lcd_buffer[1] |= 0x0ef0; break;
-			case 9:lcd_buffer[1] |= 0x0cf0; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[1] |= 0x0af0; break;
+			lcd_buffer[1] |= (LCDNumCode[number]<<4);
 			break;
 		}
 
@@ -289,21 +267,9 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[1] |= 0x000a; lcd_buffer[0] |= 0xf000; break;
-			case 1:lcd_buffer[1] |= 0x0000; lcd_buffer[0] |= 0x6000; break;
-			case 2:lcd_buffer[1] |= 0x0006; lcd_buffer[0] |= 0xd000; break;
-			case 3:lcd_buffer[1] |= 0x0004; lcd_buffer[0] |= 0xf000; break;
-			case 4:lcd_buffer[1] |= 0x000c; lcd_buffer[0] |= 0x6000; break;
-			case 5:lcd_buffer[1] |= 0x000c; lcd_buffer[0] |= 0xb000; break;
-			case 6:lcd_buffer[1] |= 0x000e; lcd_buffer[0] |= 0xb000; break;
-			case 7:lcd_buffer[1] |= 0x0000; lcd_buffer[0] |= 0xe000; break;
-			case 8:lcd_buffer[1] |= 0x000e; lcd_buffer[0] |= 0xf000; break;
-			case 9:lcd_buffer[1] |= 0x000c; lcd_buffer[0] |= 0xf000; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[1] |= 0x000a; lcd_buffer[0] |= 0xf000; break;
+			lcd_buffer[1] |= (LCDNumCode[number]>>4);
+			lcd_buffer[0] |= (LCDNumCode[number]<<12);
 			break;
 		}
 
@@ -314,21 +280,8 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[5] |= 0xaf00; break;
-			case 1:lcd_buffer[5] |= 0x0600; break;
-			case 2:lcd_buffer[5] |= 0x6d00; break;
-			case 3:lcd_buffer[5] |= 0x4f00; break;
-			case 4:lcd_buffer[5] |= 0xc600; break;
-			case 5:lcd_buffer[5] |= 0xcb00; break;
-			case 6:lcd_buffer[5] |= 0xeb00; break;
-			case 7:lcd_buffer[5] |= 0x0e00; break;
-			case 8:lcd_buffer[5] |= 0xef00; break;
-			case 9:lcd_buffer[5] |= 0xcf00; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[5] |= 0xaf00; break;
+			lcd_buffer[5] |= (LCDNumCode[number]<<8);
 			break;
 		}
 
@@ -339,21 +292,8 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[5] |= 0x00af; break;
-			case 1:lcd_buffer[5] |= 0x0006; break;
-			case 2:lcd_buffer[5] |= 0x006d; break;
-			case 3:lcd_buffer[5] |= 0x004f; break;
-			case 4:lcd_buffer[5] |= 0x00c6; break;
-			case 5:lcd_buffer[5] |= 0x00cb; break;
-			case 6:lcd_buffer[5] |= 0x00eb; break;
-			case 7:lcd_buffer[5] |= 0x000e; break;
-			case 8:lcd_buffer[5] |= 0x00ef; break;
-			case 9:lcd_buffer[5] |= 0x00cf; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[5] |= 0x00af; break;
+			lcd_buffer[5] |= LCDNumCode[number];
 			break;
 		}
 
@@ -365,20 +305,8 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 			if(display == 0) 
 				break;
 
-			switch(number)
-			{
-			case 0:lcd_buffer[4] |= 0xaf00; break;
-			case 1:lcd_buffer[4] |= 0x0600; break;
-			case 2:lcd_buffer[4] |= 0x6d00; break;
-			case 3:lcd_buffer[4] |= 0x4f00; break;
-			case 4:lcd_buffer[4] |= 0xc600; break;
-			case 5:lcd_buffer[4] |= 0xcb00; break;
-			case 6:lcd_buffer[4] |= 0xeb00; break;
-			case 7:lcd_buffer[4] |= 0x0e00; break;
-			case 8:lcd_buffer[4] |= 0xef00; break;
-			case 9:lcd_buffer[4] |= 0xcf00; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[4] |= 0xaf00; break;
+			lcd_buffer[4] |= (LCDNumCode[number]<<8);
 			break;
 		}
 
@@ -391,20 +319,9 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 			if(display == 0) 
 				break;
 
-			switch(number)
-			{
-			case 0:lcd_buffer[4] |= 0x000a; lcd_buffer[3] |= 0xf000; break;
-			case 1:lcd_buffer[4] |= 0x0000; lcd_buffer[3] |= 0x6000; break;
-			case 2:lcd_buffer[4] |= 0x0006; lcd_buffer[3] |= 0xd000; break;
-			case 3:lcd_buffer[4] |= 0x0004; lcd_buffer[3] |= 0xf000; break;
-			case 4:lcd_buffer[4] |= 0x000c; lcd_buffer[3] |= 0x6000; break;
-			case 5:lcd_buffer[4] |= 0x000c; lcd_buffer[3] |= 0xb000; break;
-			case 6:lcd_buffer[4] |= 0x000e; lcd_buffer[3] |= 0xb000; break;
-			case 7:lcd_buffer[4] |= 0x0000; lcd_buffer[3] |= 0xe000; break;
-			case 8:lcd_buffer[4] |= 0x000e; lcd_buffer[3] |= 0xf000; break;
-			case 9:lcd_buffer[4] |= 0x000c; lcd_buffer[3] |= 0xf000; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[4] |= 0x000a; lcd_buffer[3] |= 0xf000; break;
+			lcd_buffer[4] |= (LCDNumCode[number]>>4);
+			lcd_buffer[3] |= (LCDNumCode[number]<<12);
 			break;
 		}
 
@@ -415,21 +332,8 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[3] |= 0x0af0; break;
-			case 1:lcd_buffer[3] |= 0x0060; break;
-			case 2:lcd_buffer[3] |= 0x06d0; break;
-			case 3:lcd_buffer[3] |= 0x04f0; break;
-			case 4:lcd_buffer[3] |= 0x0c60; break;
-			case 5:lcd_buffer[3] |= 0x0cb0; break;
-			case 6:lcd_buffer[3] |= 0x0eb0; break;
-			case 7:lcd_buffer[3] |= 0x00e0; break;
-			case 8:lcd_buffer[3] |= 0x0ef0; break;
-			case 9:lcd_buffer[3] |= 0x0cf0; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[3] |= 0x0af0; break;
+			lcd_buffer[3] |= (LCDNumCode[number]<<4);
 			break;
 		}
 
@@ -441,21 +345,9 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[3] |= 0x000a; lcd_buffer[2] |= 0xf000; break;
-			case 1:lcd_buffer[3] |= 0x0000; lcd_buffer[2] |= 0x6000; break;
-			case 2:lcd_buffer[3] |= 0x0006; lcd_buffer[2] |= 0xd000; break;
-			case 3:lcd_buffer[3] |= 0x0004; lcd_buffer[2] |= 0xf000; break;
-			case 4:lcd_buffer[3] |= 0x000c; lcd_buffer[2] |= 0x6000; break;
-			case 5:lcd_buffer[3] |= 0x000c; lcd_buffer[2] |= 0xb000; break;
-			case 6:lcd_buffer[3] |= 0x000e; lcd_buffer[2] |= 0xb000; break;
-			case 7:lcd_buffer[3] |= 0x0000; lcd_buffer[2] |= 0xe000; break;
-			case 8:lcd_buffer[3] |= 0x000e; lcd_buffer[2] |= 0xf000; break;
-			case 9:lcd_buffer[3] |= 0x000c; lcd_buffer[2] |= 0xf000; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[3] |= 0x000a; lcd_buffer[2] |= 0xf000; break;
+			lcd_buffer[3] |= (LCDNumCode[number]>>4);
+			lcd_buffer[2] |= (LCDNumCode[number]<<12);
 			break;
 		}
 
@@ -466,21 +358,8 @@ void lcd_wr_num(uint8_t number, uint8_t position, uint8_t display)
 
 			if(display == 0) 
 				break;
-
-			switch(number)
-			{
-			case 0:lcd_buffer[2] |= 0x0af0; break;
-			case 1:lcd_buffer[2] |= 0x0060; break;
-			case 2:lcd_buffer[2] |= 0x06d0; break;
-			case 3:lcd_buffer[2] |= 0x04f0; break;
-			case 4:lcd_buffer[2] |= 0x0c60; break;
-			case 5:lcd_buffer[2] |= 0x0cb0; break;
-			case 6:lcd_buffer[2] |= 0x0eb0; break;
-			case 7:lcd_buffer[2] |= 0x00e0; break;
-			case 8:lcd_buffer[2] |= 0x0ef0; break;
-			case 9:lcd_buffer[2] |= 0x0cf0; break;
-			default:break;
-			}
+			//case 0:lcd_buffer[2] |= 0x0af0; break;
+			lcd_buffer[2] |= (LCDNumCode[number]<<4);
 			break;
 		}
 

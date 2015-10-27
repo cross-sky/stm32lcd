@@ -152,7 +152,7 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\stm32_ub_offstatus.h">
-      <Filter>源文件\USER</Filter>
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

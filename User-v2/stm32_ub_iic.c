@@ -18,7 +18,10 @@ void IIC_Init(void)
 	GPIO_Init(GPIOB,&gpio_init_structure);
 
 	GPIOB->BSRR = GPIO_Pin_10;
+#ifdef Debug
 	printf("IIC done....");
+#endif // Debug
+
 }
 
 static void i2c1_delay( void)

@@ -4,6 +4,7 @@ BUTTON_t BUTTON[]={
 	// Name    ,PORT , PIN																, CLOCK             ,0000 0111 1000 0000
 	{BTN_USER, GPIOA, GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5, RCC_APB2Periph_GPIOA,  0x003f}
 };
+//beep and background-led init at here
 
 KEY_t key;
 
@@ -51,6 +52,10 @@ bool KeyPush(uint16_t tvalue)
 			key.in = 0;
 		}
 		key.buff[key.in]=tvalue;
+
+		//MenuParam.beepFlag = 1;
+		//MenuParam.bgledFlag = 1;//light and beep
+
 #ifdef Debug
 		printf("kin %x \r\n", tvalue);
 #endif
@@ -109,8 +114,13 @@ void UB_Button_KeyIn(void)
 	}
 
 	key_status = Trg & BUTTON[btn_name].BUTTON_MASK;
+
 	if (key_status)
 	{
+		//put down any keys, then light and beep
+		MenuParam.beepFlag = 1;
+		MenuParam.bgledFlag = 1;//light and beep
+
 		switch(key_status)
 		{
 		case BTN_DOWN:	key_status=BTN_DOWN;	break;
@@ -119,9 +129,17 @@ void UB_Button_KeyIn(void)
 		case BTN_SHUT:	key_status=BTN_SHUT;	break;
 		case BTN_CLOCK:	key_status=BTN_CLOCK;	break;
 		case BTN_UP:	key_status=BTN_UP;	break;
-
+		case BTN_LOCK:	key_status=BTN_LOCK;	break;
+		case BTN_SETCORE:key_status=BTN_SETCORE;break;
 		default:	key_status=BTN_NULL;	break;
 		}
+
+		if (MenuParam.lockFlag==1 && key_status != BTN_LOCK)
+		{
+			key_status = BTN_NULL;
+			MenuParam.bgledFlag = 1;//light background-led
+		}
+
 		KeyPush(key_status);
 	}
 }

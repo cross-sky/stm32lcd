@@ -2,8 +2,7 @@
 
 
 // main menu handle and clock set
-
-void fClockOn(uint8_t hour, uint8_t min);
+void fViewCoreParam(void);
 
 void MenuOnStatus(void)
 {
@@ -12,12 +11,25 @@ void MenuOnStatus(void)
 	keyValue = KeyPop();
 	switch(keyValue)
 	{
-	case BTN_CLOCK:	MenuParam.pfmenu = MenuSetClock; break;
-	case BTN_TIMER: MenuParam.pfmenu = MenuSetTime; break;
+	case BTN_UP: fAddCoreParam(0);break;
+	case BTN_DOWN:fSubCoreParam(0);break;
+	case BTN_CLOCK:	MenuParam.pfmenu = MenuSetClock; MenuLcd();return; //break;
+	case BTN_TIMER: MenuParam.pfmenu = MenuSetTime; lcd_wr_char(_lcd23_timeOn,1);MenuLcd(); return; // break;
+	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
+	case BTN_ELEC:	MenuParam.elecFlag ^= 1; lcd_wr_char(_lcd1_elec, MenuParam.elecFlag); break;
+	case BTN_SHUT:  lcd_wr_char(_lcd3_run, 0); 
+					lcd_wr_char(_lcd10_hotWater, 0);
+					MenuParam.pfmenu =MenuOffStatus; break;
+	case BTN_SETCORE:MenuParam.pfmenu = fViewCoreParam; lcd_wr_char(_lcd5_find,1);break;
 	default:	break;
 	}
 
 	fClockOn(MenuParam.clock.hour, MenuParam.clock.min);
+	LcdSetWater(0);
+	//lcd_wr_char(_lcd11_waterT, 1);//@@@@@@@@@
+	//lcd_wr_char(_lcd13_c, 1);//c@@@@@
+	//lcd_wr_char(_lcd3_run, 1);//run
+	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);//lock
 	//pfmenu();
 }
 
@@ -27,37 +39,40 @@ void fClockOn(uint8_t hour, uint8_t min)
 	i = hour / 10;
 	j = hour % 10 ;
 
-	lcd_wr_num(i, 6, i);
+	lcd_wr_num(i, 6, 1);
 	lcd_wr_num(j, 7, 1);
 
 	i = min / 10;
 	j = min % 10 ;
 
-	lcd_wr_num(i, 8, i);
+	lcd_wr_num(i, 8, 1);
 	lcd_wr_num(j, 9, 1);
 }
 
-void ClockFlash(uint8_t number, uint8_t position)
+void ClockFlash(uint8_t number, uint8_t position, uint8_t flag_flash)
 {
 	uint8_t i,j;
-	static uint8_t flag_flash=0;
-
-	flag_flash &= 0x01;
+	//static uint8_t flag_flash=0;
 
 	i = number / 10;
 	j = number % 10 ;
 
-	if (flag_flash == 0)
-	{
-		lcd_wr_num(i, position, i);// flash on when i=0, will not display; 0(i high)0(j low)
-		lcd_wr_num(j, position+1, 1);// low position must be display
-	}
-	else
-	{
-		lcd_wr_num(i, position, 0);// flash off when i=0, will not display; 0(i high)0(j low)
-		lcd_wr_num(j, position+1, 0);// low position will not display
-	}
-	flag_flash++;
+	lcd_wr_num(i, position, flag_flash);
+	lcd_wr_num(j, position+1, flag_flash);
+
+	//flag_flash ^= 0x01;
+
+	//if (flag_flash == 0)
+	//{
+	//	lcd_wr_num(i, position, 1);// flash on when i=0, will not display; 0(i high)0(j low)
+	//	lcd_wr_num(j, position+1, 1);// low position must be display
+	//}
+	//else
+	//{
+	//	lcd_wr_num(i, position, 0);// flash off when i=0, will not display; 0(i high)0(j low)
+	//	lcd_wr_num(j, position+1, 0);// low position will not display
+	//}
+	//flag_flash++;
 
 }
 
@@ -107,7 +122,7 @@ void MenuSetClock(void)
 	uint16_t keyValue=0;// when clock is setted ,need to keep the value on lcd,can't erase it
 	static uint8_t numbs=0, pos=0;
 	static uint8_t thour, tmin, isFirstFlag=1;
-
+	static uint8_t flag_flash=0;
 	if (isFirstFlag == 1)
 	{
 		thour = MenuParam.clock.hour;
@@ -169,11 +184,13 @@ void MenuSetClock(void)
 			return ;
 			//break;
 		}
+	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
 	default: break;
 	}
 
-	ClockFlash(numbs, pos);//flash
-	
+	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
+	ClockFlash(numbs, pos,flag_flash);//flash
+	flag_flash^= 0x01;
 }
 
 void MenuLcd(void)
@@ -188,7 +205,7 @@ void MenuSetTime(void)
 	uint16_t keyValue=0;// when clock is setted ,need to keep the value on lcd,can't erase it
 	static uint8_t numbs=0, pos=0;
 	static uint8_t tonHour, tonMin, toffHour, toffMin, isFirstFlag=1;
-
+	static uint8_t flag_flash=0;
 	if (isFirstFlag == 1)
 	{
 		tonHour = MenuParam.timer.onHour;
@@ -234,6 +251,8 @@ void MenuSetTime(void)
 				}
 			case 2:
 				{
+					lcd_wr_char(_lcd23_timeOn, 0);
+					lcd_wr_char(_lcd24_timeOff, 1);
 					pos = MenuParam.timer.posHour;	//1. assign position
 					tonMin = numbs;		//2.save  last numbers
 					numbs = toffHour;	//3. assign new numbers
@@ -252,6 +271,7 @@ void MenuSetTime(void)
 				}
 			default:
 				{
+					lcd_wr_char(_lcd24_timeOff, 0);
 					toffMin = numbs;				//quit and save
 					MenuParam.timer.flag = 0;		//1. reset flag
 					MenuParam.pfmenu = MenuOnStatus;	// 2.reset pfmenu
@@ -275,9 +295,152 @@ void MenuSetTime(void)
 			fClockOn(MenuParam.clock.hour, MenuParam.clock.min);//5. display clock
 			return ;
 		}
+	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
+
+	default: break;
+	}
+	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
+	//ClockFlash(numbs, pos);//flash
+	ClockFlash(numbs, pos,flag_flash);//flash
+	flag_flash^= 0x01;
+}
+
+
+// pa6 beep pa7 bgled init with button
+void fBeepOn(uint8_t *isBeep)
+{
+	BeepOff;
+
+	if (*isBeep == 1)
+	{
+		BeepOn;
+		*isBeep = 0;// set beepflag off, beeping untill next shift
+	}
+}
+
+void TBeepOn(void)
+{
+	//beep 100ms
+	fBeepOn(&MenuParam.beepFlag);
+}
+
+void TClockPointFlash(void)
+{
+	static uint8_t tflag=0;
+	tflag++;
+	lcd_wr_char(_lcd22_timePlus, tflag);
+	tflag &=0x01;
+}
+
+void fBgledOn(uint8_t *isLightOn, uint8_t *isLock)
+{
+	static uint8_t ttime=0, tlightFlag=0, tlock=0;
+
+	if (*isLightOn == 1)
+	{
+		*isLightOn = 0;
+		ttime = 0;
+		tlightFlag = 1;
+		LCD_LED_ON;
+	}
+
+	if (tlightFlag == 1)
+	{
+		ttime++;
+		if (ttime > 9)//light on 10s
+		{
+			ttime = 0;
+
+			tlock = 0;//reset tlock;
+
+			tlightFlag = 0;
+			LCD_LED_OFF;
+		}
+	}
+
+	if (ttime == 0)
+	{
+		tlock++;
+		if (tlock > 100)
+		{
+			tlock = 0;   // when bgled off ,
+			*isLock = 1; // if did not put anykey in 100s key,then lock
+		}
+	}
+}
+
+void TBgledOn(void)
+{
+	//1s run 
+	fBgledOn(&MenuParam.bgledFlag, &MenuParam.lockFlag);
+	TClockPointFlash();
+}
+
+void fAddCoreParam(uint8_t id)
+{
+	NumCoreParam[id].value++;
+	if (NumCoreParam[id].value > NumCoreParam[id].max )
+	{
+		NumCoreParam[id].value = NumCoreParam[id].min;
+	}
+	//MenuParam.CoreParam[id].value++;
+	//if (MenuParam.CoreParam[id].value > MenuParam.CoreParam[id].max)
+	//{
+	//	MenuParam.CoreParam[id].value = MenuParam.CoreParam[id].min;
+	//}
+}
+
+void fSubCoreParam(uint8_t id)
+{
+	NumCoreParam[id].value--;
+	if (NumCoreParam[id].value < NumCoreParam[id].min )
+	{
+		NumCoreParam[id].value = NumCoreParam[id].max;
+	}
+
+	//MenuParam.CoreParam[id].value--;
+	//if (MenuParam.CoreParam[id].value < MenuParam.CoreParam[id].min)
+	//{
+	//	MenuParam.CoreParam[id].value = MenuParam.CoreParam[id].max;
+	//}
+}
+
+void LcdSetWater(uint8_t id)
+{
+	uint8_t i=0, j=0;
+	i = NumCoreParam[id].value / 10;
+	j = NumCoreParam[id].value % 10;
+
+	lcd_wr_num(0, 3, 0);
+	lcd_wr_num(i, 4, 1);
+	lcd_wr_num(j, 5, 1);
+}
+
+void fViewCoreParam(void)
+{
+	uint16_t keyValue=0;
+	static uint8_t Id=0;
+
+	keyValue = KeyPop();
+	switch(keyValue)
+	{
+	case BTN_CLOCK: Id++; 
+		if (Id >= CoreParamsMax)
+		{
+			Id = 0;
+		}
+		break;
+	case BTN_TIMER: Id--;
+		if (Id >= 0xff)
+		{
+			Id = CoreParamsMax-1;
+		}
+		break;
+	case BTN_SHUT: MenuParam.pfmenu = MenuOnStatus;  Id=0; lcd_wr_char(_lcd5_find,0);return;
+	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
 	default: break;
 	}
 
-	ClockFlash(numbs, pos);//flash
+	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
+	fOffStatusPara(Id);
 }
-

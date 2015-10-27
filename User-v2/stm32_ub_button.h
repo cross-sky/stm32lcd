@@ -17,8 +17,10 @@ typedef enum
 	BTN_CLOCK =	0x0010,	//	k5
 	BTN_UP =	0x0020,	//	k6
 
-	BTN_RIGHT_CON = 0x1080,
-	BTN_LEFT_CON = 0x1100
+	BTN_LOCK =	0x0021,	//lock
+	BTN_SETCORE = 0x0012 // 1.add key 2.add key_status
+//	BTN_RIGHT_CON = 0x1080,
+//	BTN_LEFT_CON = 0x1100
 
 }BUTTON_STATUS_t;
 

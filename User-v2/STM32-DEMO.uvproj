@@ -463,6 +463,11 @@
               <FileType>1</FileType>
               <FilePath>.\stm32_ub_params.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32_ub_offstatus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32_ub_offstatus.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -58,12 +58,16 @@ void PCF8563Init(void)
 		IICWriteByte(PCF8563ADDR,0x00, 0x00);
 		IICWriteByte(PCF8563ADDR,0x0a, 0x07);//alarm 8:00
 		IICWriteByte(PCF8563ADDR,0x01,0x12);//alarm enable
+#ifdef Debug
 		printf("pcf seting");
+#endif
 	}
 	else
 	{
 		//Pcf8563ReadTime(g853);
+#ifdef Debug
 		printf("pcf reading");
+#endif
 		Pcf8536RT();
 		//printf("%d:%d:%d",g853[2],g853[1],g853[0]);
 	}
@@ -75,7 +79,10 @@ void Pcf8536RT(void)
 
 	MenuParam.clock.hour = g853[2];
 	MenuParam.clock.min = g853[1];
-
+	
+#ifdef Debug
 	printf("%d:%d:%d ",g853[2],g853[1],g853[0]);
+#endif
+
 }
 
