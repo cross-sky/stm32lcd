@@ -9,5 +9,6 @@ void AT24CXX_WriteBuff(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Lengt
 void AT24CXX_ReadBuffer(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Length);
 
 void AT24CxxTest(void);
+bool eepWRCoreParam(void);
 
 #endif

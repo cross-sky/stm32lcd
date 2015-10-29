@@ -37,6 +37,7 @@
   <ItemGroup>
     <ClCompile Include="..\main.c" />
     <ClCompile Include="..\stm32_ub_button.c" />
+    <ClCompile Include="..\stm32_ub_dma_usart1.c" />
     <ClCompile Include="..\stm32_ub_eeprom.c" />
     <ClCompile Include="..\stm32_ub_iic.c" />
     <ClCompile Include="..\stm32_ub_lcd.c" />
@@ -65,7 +66,9 @@
   <ItemGroup>
     <ClInclude Include="..\lcd_code.h" />
     <ClInclude Include="..\stdint.h" />
+    <ClInclude Include="..\stm32f10x_it.h" />
     <ClInclude Include="..\stm32_ub_button.h" />
+    <ClInclude Include="..\stm32_ub_dma_usart1.h" />
     <ClInclude Include="..\stm32_ub_eeprom.h" />
     <ClInclude Include="..\stm32_ub_iic.h" />
     <ClInclude Include="..\stm32_ub_lcd.h" />

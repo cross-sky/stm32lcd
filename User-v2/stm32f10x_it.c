@@ -24,7 +24,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cominc.h"
 
-
+volatile uint32_t sysTickUptime = 0;
 
 /** @addtogroup STM32F10x_StdPeriph_Template;
 extern void time_delay_decrement( void );*/
@@ -138,10 +138,42 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+	sysTickUptime++;
 	TPCRemarks(TaskComps);
 }
 
+uint32_t micros(void)
+{
+	register uint32_t ms, cycle_cnt;
+	do 
+	{
+		ms = sysTickUptime;
+		cycle_cnt = SysTick->VAL;
+	} while (ms != sysTickUptime);
 
+	return ms * 5000 + (72000 - cycle_cnt)/72;
+}
+
+//return system uptime in milliseconds
+uint32_t millis(void)
+{
+	return sysTickUptime;
+}
+
+void USART1_IRQHandler( void )
+{
+	Usart1_handle();
+}
+
+void DMA1_Channel5_IRQHandler(void)
+{
+	Dma1ChRxHandle();
+}
+
+void DMA1_Channel4_IRQHandler(void)
+{
+	Dma1ChTxHandle();
+}
 
 /******************************************************************************/
 /*                 STM32F10x Peripherals Interrupt Handlers                   */

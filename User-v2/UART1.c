@@ -68,7 +68,7 @@ void UART1_Init(uint32_t bound)
 	//第2组：最高2位用于指定抢占式优先级-PreemptionPriority，最低2位用于指定响应优先级-SubPriority
 	//“组”优先级别>“抢”占优先级别>“副”优先级别
 	//数值越小所代表的优先级就越高,有必要设置组0
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+//	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 
 	nvic_inits.NVIC_IRQChannel = USARTy_IRQn;
 	nvic_inits.NVIC_IRQChannelPreemptionPriority = 0;

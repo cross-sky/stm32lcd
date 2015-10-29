@@ -1,10 +1,12 @@
 #include "cominc.h"
 
+char iic[16];
 //iic发送/接收，1字节15us
 // pb5 pb6
 //
 void IIC_Init(void)
 {
+	uint8_t len;
 	GPIO_InitTypeDef gpio_init_structure;
 	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB, ENABLE);
 
@@ -19,7 +21,10 @@ void IIC_Init(void)
 
 	GPIOB->BSRR = GPIO_Pin_10;
 #ifdef Debug
-	printf("IIC done....");
+	//printf("IIC done....");
+	sprintf(iic, "%s","iic on...\r\n");
+	len = strlen(iic);
+	UartDMAQueue(qUartLink,(uint8_t*)iic,len);
 #endif // Debug
 
 }

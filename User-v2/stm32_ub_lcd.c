@@ -2,8 +2,8 @@
 
 //buffet 16bytes 16*8=128
 uint16_t lcd_buffer[8]={0};
-
-const uint16_t LCDNumCode[]={0x00af,0x0006,0x006d,0x004f,0x00c6,0x00cb,0x00eb,0x000e,0x00ef,0x00cf};
+char s[16];
+const uint16_t LCDNumCode[]={0x00af,0x0006,0x006d,0x004f,0x00c6,0x00cb,0x00eb,0x000e,0x00ef,0x00cf,0x40};
 
 static void lcd_delay( void)
 {
@@ -166,13 +166,18 @@ void lcd_flood_data(void)
 //init ht1621b
 void Lcd1621Init(void)
 {
+	
+	uint8_t len;
 	lcdportInit();
 	lcd_send_command(0x29);//1/2bias，4comm 0x29 1/3bias
 	lcd_send_command(0x03);//启动内部振荡器
 	lcd_send_command(0x01);//打开显示
 
-#ifndef Debug
-	printf("lcd on...\r\n");
+#ifdef Debug
+	sprintf(s, "%s","lcd on...\r\n");
+	len = strlen(s);
+	UartDMAQueue(qUartLink,(uint8_t*)s,len);
+	//printf("lcd on...\r\n");
 #endif
 }
 

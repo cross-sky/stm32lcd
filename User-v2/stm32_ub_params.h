@@ -1,7 +1,7 @@
 #ifndef __STM32_UB_PARAMS
 #define __STM32_UB_PARAMS
 
-#define CoreParamsMax 2
+#define CoreParamsMax 13
 
 typedef struct
 {
@@ -33,9 +33,9 @@ typedef struct
 {
 	uint8_t ID;
 	uint8_t isChange;
-	int16_t value;
-	int16_t max;
-	int16_t min;
+	int8_t value;
+	int8_t max;
+	int8_t min;
 }stuCoreParam;
 
 

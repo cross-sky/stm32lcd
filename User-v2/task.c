@@ -6,22 +6,29 @@
 TPC_TASK TaskComps[]=
 {
 	{0, 0, 201,  201, LED1on},			// 5*200=1s   ok
+	{0, 0, 1,  1, UartDmaSend},
 	{0, 0, 2001,	2001, Pcf8536RT},
 	//{0, 0, 200, 200, lcd1621test},
 	{0,	0, 31, 31, UB_Button_KeyIn},
-	{0, 0, 70, 70, MenuLcd},
+	{0, 0, 83, 83, MenuLcd},
 	{0, 0, 20, 20, TBeepOn},//
 	{0, 0, 200, 200, TBgledOn},
-	{0, 0, 51, 51, lcd_flood_data}	//must excute at last
+	{0, 0, 41, 41, lcd_flood_data}	//must excute at last
 };
 
 
 
 void TaskInit(void)
 {
+	//第2组：最高2位用于指定抢占式优先级-PreemptionPriority，最低2位用于指定响应优先级-SubPriority
+	//“组”优先级别>“抢”占优先级别>“副”优先级别
+	//数值越小所代表的优先级就越高,有必要设置组0
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+
 	UB_LED_Init();		//PC1,PC3,PC13  ok	
 	SystickInit();
-	UART1_Init(BoundSet);
+	//UART1_Init(BoundSet);
+	UART1_Init();
 	IIC_Init();
 
 

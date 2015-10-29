@@ -15,6 +15,8 @@
 uint8_t const C8563store[4]={30,12,16,2};
 uint8_t g853[3] = {0};
 
+char pcf[16];
+char pcftim[12];
 
 void Pcf8563SetTime(const uint8_t pcfst[3])
 {
@@ -50,6 +52,7 @@ void Pcf8563ReadTime( uint8_t pcfst[3])
 
 void PCF8563Init(void)
 {
+	uint8_t len;
 	uint8_t falarm=0;
 	IICReadByte(PCF8563ADDR, Alarm, &falarm);
 	if (falarm != 0x07)
@@ -59,14 +62,20 @@ void PCF8563Init(void)
 		IICWriteByte(PCF8563ADDR,0x0a, 0x07);//alarm 8:00
 		IICWriteByte(PCF8563ADDR,0x01,0x12);//alarm enable
 #ifdef Debug
-		printf("pcf seting");
+		sprintf(pcf, "%s","pcf set..\r\n");
+		len = strlen(pcf);
+		UartDMAQueue(qUartLink,(uint8_t*)pcf,len);
+		//printf("pcf seting");
 #endif
 	}
 	else
 	{
 		//Pcf8563ReadTime(g853);
 #ifdef Debug
-		printf("pcf reading");
+		//printf("pcf reading");
+		sprintf(pcf, "%s","pcf on..\r\n");
+		len = strlen(pcf);
+		UartDMAQueue(qUartLink,(uint8_t*)pcf,len);
 #endif
 		Pcf8536RT();
 		//printf("%d:%d:%d",g853[2],g853[1],g853[0]);
@@ -75,13 +84,17 @@ void PCF8563Init(void)
 
 void Pcf8536RT(void)
 {
+	uint8_t len;
 	Pcf8563ReadTime(g853);
 
 	MenuParam.clock.hour = g853[2];
 	MenuParam.clock.min = g853[1];
 	
 #ifdef Debug
-	printf("%d:%d:%d ",g853[2],g853[1],g853[0]);
+	//printf("%d:%d:%d ",g853[2],g853[1],g853[0]);
+	sprintf(pcftim, "%d:%d:%d ",g853[2],g853[1],g853[0]);
+	len = strlen(pcftim);
+	UartDMAQueue(qUartLink,(uint8_t*)pcftim,len);
 #endif
 
 }

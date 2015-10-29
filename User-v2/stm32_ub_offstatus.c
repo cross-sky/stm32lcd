@@ -61,7 +61,7 @@ void fOffStatusPara(uint8_t Id)
 	uint8_t i,j,m;
 	int16_t k;
 	i = Id/10;
-	j = Id%CoreParamsMax;
+	j = Id%10;
 	k = NumCoreParam[Id].value;
 
 	lcd_wr_num(0, 3, 1);
@@ -73,7 +73,7 @@ void fOffStatusPara(uint8_t Id)
 		m = k / 100;
 		i = k/10;
 		j = k % 10;
-		lcd_wr_num(m, 0, 1);
+		lcd_wr_num(m, 0, m);
 		lcd_wr_num(i, 1, 1);
 		lcd_wr_num(j, 2, 1);
 	} 

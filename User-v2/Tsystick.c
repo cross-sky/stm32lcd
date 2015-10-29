@@ -1,6 +1,7 @@
 #include "cominc.h"
 
 
+
 #define D_5MS	200
 #define D_1MS	1000			//1ms÷–∂œ1¥Œ
 
@@ -16,6 +17,16 @@ void SystickInit( void )
 
 }
 
+void delay_us(uint32_t nus)
+{
+	uint32_t t0 = micros();
+	while(micros() - t0 < nus);
+}
 
+void delay_ms(uint32_t nms)
+{
+	uint32_t t0 = micros();
+	while (micros() - t0 < nms * 1000);
+}
 
 

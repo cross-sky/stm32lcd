@@ -81,9 +81,6 @@
     <ClCompile Include="..\..\CMSIS\system_stm32f10x.c">
       <Filter>源文件\CMSIS</Filter>
     </ClCompile>
-    <ClCompile Include="..\stm32_ub_button.c">
-      <Filter>源文件\USER</Filter>
-    </ClCompile>
     <ClCompile Include="..\stm32_ub_iic.c">
       <Filter>源文件\USER</Filter>
     </ClCompile>
@@ -106,6 +103,12 @@
       <Filter>源文件\USER</Filter>
     </ClCompile>
     <ClCompile Include="..\stm32_ub_offstatus.c">
+      <Filter>源文件\USER</Filter>
+    </ClCompile>
+    <ClCompile Include="..\stm32_ub_dma_usart1.c">
+      <Filter>源文件\USER</Filter>
+    </ClCompile>
+    <ClCompile Include="..\stm32_ub_button.c">
       <Filter>源文件\USER</Filter>
     </ClCompile>
   </ItemGroup>
@@ -152,6 +155,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\stm32_ub_offstatus.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\stm32_ub_dma_usart1.h">
+      <Filter>源文件\USER</Filter>
+    </ClInclude>
+    <ClInclude Include="..\stm32f10x_it.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

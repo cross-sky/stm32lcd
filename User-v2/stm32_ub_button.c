@@ -39,7 +39,7 @@ bool KeyPush(uint16_t tvalue)
 	if ((key.in+1)%KeyBuffLen == key.out)
 	{
 #ifdef Debug
-		printf("out of key buff \r\n");
+		//printf("out of key buff \r\n");
 #endif
 		return FALSE;
 	}
@@ -57,7 +57,7 @@ bool KeyPush(uint16_t tvalue)
 		//MenuParam.bgledFlag = 1;//light and beep
 
 #ifdef Debug
-		printf("kin %x \r\n", tvalue);
+		//printf("kin %x \r\n", tvalue);
 #endif
 		return TRUE;		
 	}

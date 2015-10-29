@@ -131,6 +131,7 @@ void MenuSetClock(void)
 
 		pos = MenuParam.clock.posHour;
 		numbs = thour;
+		flag_flash=0;
 	}
 
 	keyValue = KeyPop();
@@ -156,6 +157,8 @@ void MenuSetClock(void)
 
 			if (MenuParam.clock.flag  == 1)
 			{
+				flag_flash=0;
+				
 				pos = MenuParam.clock.posMin;
 				thour = numbs;
 				numbs = tmin;
@@ -214,7 +217,7 @@ void MenuSetTime(void)
 		toffMin = MenuParam.timer.offMin;
 
 		isFirstFlag = 0;
-
+		flag_flash=0;
 		pos = MenuParam.timer.posHour;//need to add timer on/off ico **********
 		numbs = tonHour;
 	
@@ -355,6 +358,8 @@ void fBgledOn(uint8_t *isLightOn, uint8_t *isLock)
 
 			tlightFlag = 0;
 			LCD_LED_OFF;
+			 //then  send coreparams
+			lcd_wr_char(_lcd6_err,eepWRCoreParam());
 		}
 	}
 
@@ -383,6 +388,7 @@ void fAddCoreParam(uint8_t id)
 	{
 		NumCoreParam[id].value = NumCoreParam[id].min;
 	}
+	NumCoreParam[0].isChange = 1;
 	//MenuParam.CoreParam[id].value++;
 	//if (MenuParam.CoreParam[id].value > MenuParam.CoreParam[id].max)
 	//{
@@ -397,7 +403,7 @@ void fSubCoreParam(uint8_t id)
 	{
 		NumCoreParam[id].value = NumCoreParam[id].max;
 	}
-
+	NumCoreParam[0].isChange = 1;
 	//MenuParam.CoreParam[id].value--;
 	//if (MenuParam.CoreParam[id].value < MenuParam.CoreParam[id].min)
 	//{

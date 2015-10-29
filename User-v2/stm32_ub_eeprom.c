@@ -5,6 +5,11 @@
 #define MEMORY_SIZE 256
 #define PAGE_NUM 32
 
+char eeprom[20];
+
+
+bool eepRdCoreParam(void);
+
 
 void AT24CXX_WriteBuff(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Length)
 {
@@ -46,17 +51,21 @@ void AT24CXX_WriteBuff(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Lengt
 		{
 			IICWriteBytes(dev, reg, FirstPageLeft,Buffer);
 		}
+		delay_ms(1);
 		for (counter=0; counter<FullPageNums; counter++)
 		{
 			IICWriteBytes(dev, reg + FirstPageLeft + counter * PAGE_SIZE,
 				PAGE_SIZE, 
 				Buffer + FirstPageLeft + counter * PAGE_SIZE);
+			delay_ms(1);
 		}
+		
 		if (LastPageUsed > 0)
 		{
 			IICWriteBytes(dev,reg + FirstPageLeft + FullPageNums * PAGE_SIZE,
 				PAGE_SIZE,
 				Buffer + FirstPageLeft + FullPageNums * PAGE_SIZE);
+			delay_ms(1);
 		}
 	}
 	else
@@ -70,10 +79,11 @@ void AT24CXX_WriteBuff(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Lengt
 			if (Length <= FirstPageLeft + LastPageUsed)
 			{
 				IICWriteBytes(dev,reg,FirstPageLeft,Buffer);
-
+				delay_ms(1);
 				IICWriteBytes(dev, reg + FirstPageLeft, LastPageUsed, Buffer+FirstPageLeft);
 			}
 		}
+		delay_ms(1);
 	}
 }
 
@@ -109,17 +119,21 @@ void AT24CXX_ReadBuffer(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Leng
 		{
 			IICReadBytes(dev,reg,FirstPageLeft,Buffer);
 		}
+		delay_ms(1);
 		for (counter=0; counter<FullPageNums; counter++)
 		{
 			IICReadBytes(dev, reg + FirstPageLeft + counter * PAGE_SIZE,
 				PAGE_SIZE, 
 				Buffer + FirstPageLeft + counter * PAGE_SIZE);
+			delay_ms(1);
 		}
+
 		if (LastPageUsed > 0)
 		{
 			IICReadBytes(dev, reg + FirstPageLeft + FullPageNums * PAGE_SIZE,
 				PAGE_SIZE,
 				Buffer + FirstPageLeft + FullPageNums * PAGE_SIZE);
+			delay_ms(1);
 		}
 
 	}
@@ -134,19 +148,22 @@ void AT24CXX_ReadBuffer(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Leng
 			if (Length <= FirstPageLeft + LastPageUsed)
 			{
 				IICReadBytes(dev,reg,FirstPageLeft,Buffer);
-
+				delay_ms(1);
 				IICReadBytes(dev, reg+FirstPageLeft, LastPageUsed, Buffer+FirstPageLeft);
 			}
 		}
+		delay_ms(1);
 	}
 }
 
 void AT24CxxTest(void)
 {
-	uint8_t wrnum[6]={3};
+	uint8_t len;
+	uint8_t wrnum[6]={3,2,5};
 	uint8_t renum[6]={0};
 	uint8_t reg=0x00;
 	uint8_t i;
+	
 	AT24CXX_ReadBuffer(AT24CXX, reg, renum, 6);
 	for (i=0; i<6; i++)
 	{
@@ -158,16 +175,97 @@ void AT24CxxTest(void)
 
 	if (i != 6)
 	{
+		//write defined number
 		AT24CXX_WriteBuff(AT24CXX, reg, wrnum, 6);
-#ifdef Debug
-	printf("eeprom fail \r\n");
-#endif
+		i = eepWRCoreParam();
+//#ifdef Debug
+//		sprintf(eeprom, "%s","eep wr..\r\n");
+//		len = strlen(eeprom);
+//		UartDMAQueue(qUartLink,(uint8_t*)eeprom,len);
+//		//printf("eeprom fail \r\n");
+//#endif
 
 	}
 	else
+	{
+		// read saved number
+		//i=0;
+		i=eepRdCoreParam();	
+		//eepRdCoreParam();
 #ifdef Debug
-		printf("eeprom success...");
+		sprintf(eeprom, "%s","eep rd...\r\n");
+		len = strlen(eeprom);
+		UartDMAQueue(qUartLink,(uint8_t*)eeprom,len);
+		//printf("eeprom success...");
 #endif
+	}
+
+	lcd_wr_char(_lcd6_err,i);
+	
 }
 
+bool eepRdCoreParam(void)
+{
+	uint8_t coPams[16]={0};
+	uint8_t reg=0x08,i,vadd=0;
+	//uint8_t len = CoreParamsMax<<1;
+	AT24CXX_ReadBuffer(AT24CXX, reg, coPams, CoreParamsMax+1);
+	for(i=0; i<CoreParamsMax; i++)
+	{
+		//high level ffront, low level back
+		NumCoreParam[i].value = (int8_t)coPams[i]; 
+		vadd += coPams[i];
+	}
+	if (coPams[i] != vadd)
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
 
+bool eepWRCoreParam(void)
+{
+	//save and send
+	uint8_t checkPams[20]={0};
+	uint8_t reg=0x08,i,vadd=0;
+	for (i=2; i<CoreParamsMax; i++)
+	{
+		eeprom[i] =  (uint8_t)NumCoreParam[i].value;
+		vadd += eeprom[i];
+	}
+
+	eeprom[0]=0xff;
+	eeprom[1]=0xcc;
+	eeprom[i]=vadd;
+	UartDMAQueue(qUartLink,(uint8_t*)eeprom,i+1);//send i+1 13+5
+
+	AT24CXX_WriteBuff(AT24CXX, reg, eeprom, CoreParamsMax+1);
+	AT24CXX_ReadBuffer(AT24CXX, reg, &checkPams[2], CoreParamsMax+1);
+	reg = 0;
+	for(i=2;i<CoreParamsMax;i++)
+	{
+		if (eeprom[i] != checkPams[i])
+		{
+			break;
+		}
+		reg += checkPams[i];
+	}
+	if (i!= CoreParamsMax || reg != vadd)
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
+void eepSendParam(void)
+{
+
+}
+
+//void eepWrOneParam(uint8_t id)
+//{
+//	uint8_t dat,reg;
+//	dat = (uint8_t)NumCoreParam[id].value;
+//	reg = 0x08 + id;
+//	AT24CXX_WriteBuff(AT24CXX, reg, &dat, 1);
+//}
