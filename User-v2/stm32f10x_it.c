@@ -162,7 +162,8 @@ uint32_t millis(void)
 
 void USART1_IRQHandler( void )
 {
-	Usart1_handle();
+	//Usart1_handle();
+	Usart1HandleV2();
 }
 
 void DMA1_Channel5_IRQHandler(void)
@@ -172,7 +173,8 @@ void DMA1_Channel5_IRQHandler(void)
 
 void DMA1_Channel4_IRQHandler(void)
 {
-	Dma1ChTxHandle();
+	//Dma1ChTxHandle();
+	Dma1ChTxHandleV2();
 }
 
 /******************************************************************************/

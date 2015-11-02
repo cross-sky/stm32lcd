@@ -47,6 +47,7 @@
     <ClCompile Include="..\stm32_ub_offstatus.c" />
     <ClCompile Include="..\stm32_ub_params.c" />
     <ClCompile Include="..\stm32_ub_pcf8563.c" />
+    <ClCompile Include="..\stm32_ub_wdog.c" />
     <ClCompile Include="..\task.c" />
     <ClCompile Include="..\Tsystick.c" />
     <ClCompile Include="..\..\FWlib\src\stm32f10x_rcc.c" />
@@ -76,6 +77,7 @@
     <ClInclude Include="..\stm32_ub_offstatus.h" />
     <ClInclude Include="..\stm32_ub_params.h" />
     <ClInclude Include="..\stm32_ub_pcf8563.h" />
+    <ClInclude Include="..\stm32_ub_wdog.h" />
     <ClInclude Include="..\UART1.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

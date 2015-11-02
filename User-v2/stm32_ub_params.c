@@ -4,7 +4,7 @@ stuLcdParams MenuParam;
 
 stuCoreParam NumCoreParam[CoreParamsMax]={
 	//id,flag value max min
-	{0, 0, 55,	70,	30},
+	{0, 0, 50,	70,	30},
 	{1, 0, 5,	15,	2},
 	{2, 0, 55,	90, 10},
 	{3, 0, 30,	90, 0},
@@ -16,7 +16,7 @@ stuCoreParam NumCoreParam[CoreParamsMax]={
 	{9, 0, 8,	12, 1},
 	{10, 0, 1,	1, 0},
 	{11, 0, 10, 20, -20},
-	{12, 0, 35, 50, 10},
+	{12, 0, 30, 50, 10},
 };
 
 void MenuParaInit(void)
@@ -29,10 +29,10 @@ void MenuParaInit(void)
 	MenuParam.pfmenu = MenuOffStatus;
 	//pfmenu = MenuOnStatus; // important
 
-	MenuParam.timer.onHour = 10;
-	MenuParam.timer.onMin = 10;
-	MenuParam.timer.offHour = 20;
-	MenuParam.timer.offMin = 20;
+	MenuParam.timer.onHour = 11;
+	MenuParam.timer.onMin = 0;
+	MenuParam.timer.offHour = 11;
+	MenuParam.timer.offMin = 0;
 	MenuParam.timer.posHour = PosHour;
 	MenuParam.timer.posMin = PosMin;
 	MenuParam.timer.flag = 0;
@@ -48,7 +48,9 @@ void MenuParaInit(void)
 	MenuParam.elecFlag = 0;
 
 	MenuParam.CoreParam = NumCoreParam;
-
+	MenuParam.runFlag = 0;//0 off , 1 run
+	MenuParam.StartParamChange = 0;// set by timeon/off on/off elec
+	MenuParam.WaterT = 0;
 
 	lcd_wr_char(_lcd11_waterT, 1);
 	lcd_wr_char(_lcd13_c, 1);

@@ -14,16 +14,21 @@ void MenuOnStatus(void)
 	case BTN_UP: fAddCoreParam(0);break;
 	case BTN_DOWN:fSubCoreParam(0);break;
 	case BTN_CLOCK:	MenuParam.pfmenu = MenuSetClock; MenuLcd();return; //break;
-	case BTN_TIMER: MenuParam.pfmenu = MenuSetTime; lcd_wr_char(_lcd23_timeOn,1);MenuLcd(); return; // break;
+	case BTN_TIMER: MenuParam.pfmenu = MenuSetTime; lcd_wr_char(_lcd23_timeOn,1);lcd_wr_char(_lcd24_timeOff, 0);MenuLcd(); return; // break;
 	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
-	case BTN_ELEC:	MenuParam.elecFlag ^= 1; lcd_wr_char(_lcd1_elec, MenuParam.elecFlag); break;
+	case BTN_ELEC:	MenuParam.elecFlag ^= 1; 
+					MenuParam.StartParamChange = 1;
+					lcd_wr_char(_lcd1_elec, MenuParam.elecFlag); break;
 	case BTN_SHUT:  lcd_wr_char(_lcd3_run, 0); 
 					lcd_wr_char(_lcd10_hotWater, 0);
+					MenuParam.runFlag ^= 0x01;
+					MenuParam.StartParamChange=1;
 					MenuParam.pfmenu =MenuOffStatus; break;
 	case BTN_SETCORE:MenuParam.pfmenu = fViewCoreParam; lcd_wr_char(_lcd5_find,1);break;
 	default:	break;
 	}
 
+	DispLayWatetT();
 	fClockOn(MenuParam.clock.hour, MenuParam.clock.min);
 	LcdSetWater(0);
 	//lcd_wr_char(_lcd11_waterT, 1);//@@@@@@@@@
@@ -190,7 +195,7 @@ void MenuSetClock(void)
 	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
 	default: break;
 	}
-
+	DispLayWatetT();
 	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
 	ClockFlash(numbs, pos,flag_flash);//flash
 	flag_flash^= 0x01;
@@ -284,6 +289,7 @@ void MenuSetTime(void)
 					MenuParam.timer.offMin = toffMin;
 					isFirstFlag = 1;					//4. reset firstflag
 					fClockOn(MenuParam.clock.hour, MenuParam.clock.min);//5. display clock
+					CheckTimer(1);					
 					return ;					
 				}
 			}
@@ -296,12 +302,15 @@ void MenuSetTime(void)
 			MenuParam.timer.flag = 0; // quit without save
 			isFirstFlag = 1;
 			fClockOn(MenuParam.clock.hour, MenuParam.clock.min);//5. display clock
+			CheckTimer(0);
 			return ;
 		}
 	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
 
 	default: break;
 	}
+
+	DispLayWatetT();
 	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
 	//ClockFlash(numbs, pos);//flash
 	ClockFlash(numbs, pos,flag_flash);//flash
@@ -338,7 +347,7 @@ void TClockPointFlash(void)
 void fBgledOn(uint8_t *isLightOn, uint8_t *isLock)
 {
 	static uint8_t ttime=0, tlightFlag=0, tlock=0;
-
+	uint8_t i;
 	if (*isLightOn == 1)
 	{
 		*isLightOn = 0;
@@ -359,7 +368,13 @@ void fBgledOn(uint8_t *isLightOn, uint8_t *isLock)
 			tlightFlag = 0;
 			LCD_LED_OFF;
 			 //then  send coreparams
-			lcd_wr_char(_lcd6_err,eepWRCoreParam());
+			if (NumCoreParam[0].isChange == 1)
+			{
+				i=eepWRCoreParam()^0x01;
+				lcd_wr_char(_lcd6_err,i);
+				NumCoreParam[0].isChange = 0;
+			}
+
 		}
 	}
 

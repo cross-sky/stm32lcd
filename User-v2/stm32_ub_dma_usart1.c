@@ -10,6 +10,8 @@ uint8_t TxBuffer2[FIFO_SIZE];
 UART_LinkQueue *qUartLink;
 UART_QNode lastSend;
 uint8_t DmaFirstSend=1;
+uint8_t DmaSendFlag=0;
+uint8_t DmaReceFlag=0;
 
 UART_LinkQueue* UartLinkQueueInit(void);
 bool UART_DEQueue(UART_LinkQueue *q, UART_QueuePtr e);
@@ -164,6 +166,53 @@ void Usart1_handle(void)
 	USART_ClearITPendingBit(USART1, USART_IT_IDLE);
 }
 
+void Usart1HandleV2(void)
+{
+	uint8_t DataLen, i;
+	//UART_QNode e;
+
+	if (USART_GetITStatus(USART1, USART_IT_IDLE) != RESET)
+	{
+		DMA_Cmd(DMA1_Ch_Usart1_Rx, DISABLE);
+		DataLen = FIFO_SIZE - DMA_GetCurrDataCounter(DMA1_Ch_Usart1_Rx);
+		if (DataLen > 0)
+		{
+			if (RxBuffer2[0]==0xfc && RxBuffer2[1]==0xcf)
+			{
+				i = RxBuffer2[3];//f3 addr[3]
+				switch (i)
+				{
+					//run elec
+				case 0xf1: DmaSendFlag = i;//f=addr[3]
+					break;
+					//set params
+				case 0xf2: DmaReceFlag = i;//f=addr[3]
+					break;
+					//request warterT
+				case 0xf3: DmaReceFlag = i;//f=addr[3]
+					//........
+					break;
+				default:break;
+				}
+			}
+		}
+		//Tx		DMA1_Channel4, Rx		DMA1_Channel5
+		//gl global flag te transmit error ht half transmit
+		DMA_ClearFlag(DMA1_FLAG_GL5|DMA1_FLAG_TC5|DMA1_FLAG_TE5|DMA1_FLAG_HT5);//清标志
+		DMA1_Ch_Usart1_Rx->CNDTR = FIFO_SIZE;//重装填
+		DMA_Cmd(DMA1_Ch_Usart1_Rx, ENABLE);//处理完,重开DMA
+		//读SR后读DR清除Idle
+		i = USART1->SR;
+		i = USART1->DR;
+	}
+	if (USART_GetITStatus(USART1, USART_IT_PE | USART_IT_FE | USART_IT_NE) != RESET)
+	{
+		USART_ClearITPendingBit(USART1, USART_IT_PE | USART_IT_FE | USART_IT_NE);
+	}
+	USART_ClearITPendingBit(USART1, USART_IT_TC);
+	USART_ClearITPendingBit(USART1, USART_IT_IDLE);
+}
+
 void Dma1ChRxHandle(void)
 {
 	DMA_ClearITPendingBit(DMA1_IT_TC5|DMA1_IT_TE5);
@@ -199,6 +248,13 @@ void Dma1ChTxHandle(void)
 	}
 }
 
+void Dma1ChTxHandleV2(void)
+{
+	DMA_ClearITPendingBit(DMA1_IT_TC4|DMA1_IT_TE4);
+	DMA_Cmd(DMA1_Ch_Usart1_Tx, DISABLE);
+	//DmaSendFlag = 2;
+}
+
 bool UART_ENQueue(UART_LinkQueue *q, uint8_t *addres_8u, uint8_t length)
 {
 	UART_QueuePtr s = (UART_QueuePtr)malloc(sizeof(UART_QNode));
@@ -209,6 +265,18 @@ bool UART_ENQueue(UART_LinkQueue *q, uint8_t *addres_8u, uint8_t length)
 	s->Next = NULL;
 	q->rear->Next = s;
 	q->rear = s;
+	return TRUE;
+}
+
+bool UART_VEQUeue(UART_LinkQueue *q, UART_QueuePtr e)
+{
+	UART_QueuePtr p;
+	if(q->front == q->rear)
+		return FALSE;
+	p = q->front->Next;
+	e->Addr_8U = p->Addr_8U;
+	e->length = p->length;
+
 	return TRUE;
 }
 
@@ -304,6 +372,56 @@ void UartDmaSend(void)
 			lastSend.length = e.length;
 		}
 	}
+}
+
+void UartDmaSendV2(void)
+{
+	static uint8_t i=0, resendTimes=0;
+	UART_QNode e;
+	if (DmaFirstSend != 1)
+	{
+		if (DmaSendFlag == DmaReceFlag)
+		{
+			//dequeue data, has receive data, then send next data
+			UART_DEQueue(qUartLink, &e);//出队
+			DmaReceFlag = 0;//reset receflag
+			DmaSendFlag = 1;//reset send flag;
+		}
+		else
+		{
+			i++;
+			if (i<50)
+			{
+				return;
+			}
+			else
+			{
+				i=0;//did not receive data in 1s, then resend
+				resendTimes++;
+				if (resendTimes >3)
+				{
+					//error on uart,can not receive data from board
+					resendTimes = 0;
+					lcd_wr_char(_lcd3_run, 0); 
+					lcd_wr_char(_lcd10_hotWater, 0);
+					MenuParam.pfmenu = ErrorDisplay;
+				}
+			}
+		}
+	}
+	
+	if (qUartLink->front != qUartLink->rear)
+	{
+		UART_VEQUeue(qUartLink, &e);//new uart data
+		DMASendSet(e.Addr_8U,e.length);
+		DmaFirstSend = 0;//
+		DmaSendFlag = e.Addr_8U[3];//set send flag,addr[3];
+	}
+	else
+	{
+		DmaFirstSend=1;//has send all data, reset to 1
+	}
+
 }
 
 //void TxPop(uint8_t len)

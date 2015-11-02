@@ -51,6 +51,9 @@ void Dma1ChRxHandle(void);
 void Dma1ChTxHandle(void);
 void UartDmaSend(void);
 
+void Usart1HandleV2(void);
+void Dma1ChTxHandleV2(void);
+void UartDmaSendV2(void);
 extern UART_LinkQueue *qUartLink;;
 #endif
 

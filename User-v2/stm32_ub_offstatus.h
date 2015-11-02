@@ -3,5 +3,6 @@
 
 void MenuOffStatus(void);
 void fOffStatusPara(uint8_t Id);
-
+void DispLayWatetT(void);
+void ErrorDisplay(void);
 #endif

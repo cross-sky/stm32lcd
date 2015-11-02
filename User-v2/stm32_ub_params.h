@@ -50,6 +50,9 @@ typedef struct
 	uint8_t lockFlag;
 	stuCoreParam *CoreParam;
 	uint8_t elecFlag;
+	uint8_t runFlag;
+	uint8_t StartParamChange;
+	uint8_t WaterT;
 }stuLcdParams;
 
 extern stuLcdParams MenuParam;

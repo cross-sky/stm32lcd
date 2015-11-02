@@ -4,12 +4,27 @@
 #define PAGE_SIZE 8
 #define MEMORY_SIZE 256
 #define PAGE_NUM 32
+#define STARTPAMS 0xaf
 
-char eeprom[20];
+char eeprom[20]={0};
+char RdEeprom[20]={0};
+char StartParamCheck[8]={STARTPAMS};
+uint8_t renum[8]={0};
+uint8_t ReqWaterT[6]={0xfd,0xba,0x01,0,0xca};
 
+// 开关机 电加热 
+//0xfe, 0xef, 0x02, 00, 00, 校验， 结束(0xca)
+const uint8_t StartEep[2]={0xfe, 0xef};
+const uint8_t Timertab[8]={0,1,0xcc,0,1,0xcc,0,1};
 
-bool eepRdCoreParam(void);
+// 设置参数
+//0xff,0xcc, 0x0d,13byte,校验， 结束(0xca)
 
+//发送温度等查询
+//0xfd,0xba,0x01,校验， 结束(0xca)
+
+uint8_t eepRdCoreParam(void);
+void RequestTempe(void);
 
 void AT24CXX_WriteBuff(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Length)
 {
@@ -159,24 +174,21 @@ void AT24CXX_ReadBuffer(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Leng
 void AT24CxxTest(void)
 {
 	uint8_t len;
-	uint8_t wrnum[6]={3,2,5};
-	uint8_t renum[6]={0};
+//	uint8_t wrnum[6]={3,1,5};	
 	uint8_t reg=0x00;
-	uint8_t i;
+	uint8_t i,vadd=0;
 	
-	AT24CXX_ReadBuffer(AT24CXX, reg, renum, 6);
+	AT24CXX_ReadBuffer(AT24CXX, reg, renum, 7);
 	for (i=0; i<6; i++)
 	{
-		if (wrnum[i] != renum[i])
-		{
-			break;
-		}
+		vadd+=renum[i];
 	}
-
-	if (i != 6)
+	if (renum[i] != vadd)
 	{
 		//write defined number
-		AT24CXX_WriteBuff(AT24CXX, reg, wrnum, 6);
+		//WRStartParam(1);
+		eepSaveTimer();
+		//AT24CXX_WriteBuff(AT24CXX, reg, wrnum, 6);
 		i = eepWRCoreParam();
 //#ifdef Debug
 //		sprintf(eeprom, "%s","eep wr..\r\n");
@@ -189,7 +201,12 @@ void AT24CxxTest(void)
 	else
 	{
 		// read saved number
-		//i=0;
+		MenuParam.runFlag = 0;
+		MenuParam.elecFlag = 0;
+		MenuParam.timer.onHour=renum[2];
+		MenuParam.timer.onMin=renum[3];
+		MenuParam.timer.offHour=renum[4];
+		MenuParam.timer.offMin=renum[5];
 		i=eepRdCoreParam();	
 		//eepRdCoreParam();
 #ifdef Debug
@@ -200,72 +217,299 @@ void AT24CxxTest(void)
 #endif
 	}
 
-	lcd_wr_char(_lcd6_err,i);
+	//if ( MenuParam.runFlag == 0)
+	//{
+	//	lcd_wr_char(_lcd3_run, 0); 
+	//	lcd_wr_char(_lcd10_hotWater, 0);
+	//	MenuParam.pfmenu =MenuOffStatus;
+	//	
+	//}
+	//else
+	//{
+	//	MenuParam.pfmenu = MenuOnStatus; 
+	//	lcd_wr_char(_lcd3_run, 1);
+	//	lcd_wr_char(_lcd10_hotWater, 1);
+	//	//send start param
+	//}
+
+	//send check waterT
+	CheckTimer(0);
+	lcd_wr_char(_lcd6_err,i^0x01);
 	
 }
 
-bool eepRdCoreParam(void)
+uint8_t eepRdCoreParam(void)
 {
-	uint8_t coPams[16]={0};
-	uint8_t reg=0x08,i,vadd=0;
+	uint8_t reg=0x08,i,j=0,vadd=0;
+	uint8_t len=CoreParamsMax+3;
 	//uint8_t len = CoreParamsMax<<1;
-	AT24CXX_ReadBuffer(AT24CXX, reg, coPams, CoreParamsMax+1);
-	for(i=0; i<CoreParamsMax; i++)
+	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&RdEeprom[3], CoreParamsMax+1);//############
+	RdEeprom[0]=0xff;
+	RdEeprom[1]=0xcc;//start(2) + 1 +13 + check(1)+ end(1) = 18
+	RdEeprom[2]=CoreParamsMax;
+
+	for(i=3; i<len; i++)
 	{
 		//high level ffront, low level back
-		NumCoreParam[i].value = (int8_t)coPams[i]; 
-		vadd += coPams[i];
+		NumCoreParam[j].value = (int8_t)RdEeprom[i]; 
+		vadd += RdEeprom[i];
+		j++;
 	}
-	if (coPams[i] != vadd)
+	if (RdEeprom[i] != vadd)
 	{
 		return FALSE;
 	}
+	RdEeprom[i] = vadd;
+	RdEeprom[17] = 0xca;
+	UartDMAQueue(qUartLink,(uint8_t*)RdEeprom,18);//send i+1 13+5
 	return TRUE;
 }
 
-bool eepWRCoreParam(void)
+uint8_t eepWRCoreParam(void)
 {
 	//save and send
 	uint8_t checkPams[20]={0};
-	uint8_t reg=0x08,i,vadd=0;
-	for (i=2; i<CoreParamsMax; i++)
+	uint8_t reg=0x08,i,j=0,vadd=0;
+	uint8_t len=CoreParamsMax+3;
+	for (i=3; i<len; i++)
 	{
-		eeprom[i] =  (uint8_t)NumCoreParam[i].value;
+		eeprom[i] =  (uint8_t)NumCoreParam[j].value;
 		vadd += eeprom[i];
+		j++;
 	}
 
 	eeprom[0]=0xff;
 	eeprom[1]=0xcc;
+	eeprom[2]=CoreParamsMax;
 	eeprom[i]=vadd;
-	UartDMAQueue(qUartLink,(uint8_t*)eeprom,i+1);//send i+1 13+5
+	eeprom[17]=0xca;
+	UartDMAQueue(qUartLink,(uint8_t*)eeprom,18);//send i+1 13+5
 
-	AT24CXX_WriteBuff(AT24CXX, reg, eeprom, CoreParamsMax+1);
-	AT24CXX_ReadBuffer(AT24CXX, reg, &checkPams[2], CoreParamsMax+1);
-	reg = 0;
-	for(i=2;i<CoreParamsMax;i++)
+	AT24CXX_WriteBuff(AT24CXX, reg, (uint8_t*)&eeprom[3], CoreParamsMax+1);//########
+	delay_ms(1);
+	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&checkPams[3], CoreParamsMax+1);//############
+	//len=CoreParamsMax+3;
+	for(i=3;i<len;i++)
 	{
 		if (eeprom[i] != checkPams[i])
 		{
 			break;
 		}
-		reg += checkPams[i];
 	}
-	if (i!= CoreParamsMax || reg != vadd)
+	if (i!= len)
 	{
 		return FALSE;
 	}
-	return TRUE;
+	else
+		return TRUE;
 }
 
-void eepSendParam(void)
+
+void TaskSendStartParm(void)
 {
+	static uint8_t i=0;
+	uint16_t ttime,tontime, tofftime;
+	static uint8_t tcheck=0, tlastcheck=0;
+	uint8_t k;
+	i++;
+	if (i>= 10)
+	{
+		i=0;
+		RequestTempe();//10s 
+		ttime = MenuParam.clock.hour<<6 | MenuParam.clock.min;
+		tontime = MenuParam.timer.onHour<<6 | MenuParam.timer.onMin;
+		tofftime = MenuParam.timer.offHour<<6 | MenuParam.timer.offMin;
 
+		if (tontime == tofftime)
+		{
+			return ;
+		}
+
+		k = (tontime>tofftime)<<2 |(ttime > tofftime)<<1 | (ttime > tontime);
+		tcheck = Timertab[k];
+
+		if (tcheck != tlastcheck && tcheck!= 0xcc)
+		{
+			//switch
+			if (MenuParam.pfmenu== MenuOffStatus || MenuParam.pfmenu== MenuOnStatus)
+			{
+				KeyPush(BTN_SHUT);
+				
+			}
+			else
+			{
+				KeyPush(BTN_SHUT);
+				KeyPush(BTN_SHUT);
+			}
+			MenuParam.beepFlag = 1;
+		}
+
+		tlastcheck = tcheck;
+
+
+		//if (MenuParam.runFlag==0 && ttime > tontime)
+		//{
+		//	//tcheck = 1;
+		//	MenuParam.StartParamChange = 1;
+		//	MenuParam.runFlag ^= 0x01;
+		//	lcd_wr_char(_lcd3_run, 0); 
+		//	lcd_wr_char(_lcd10_hotWater, 0);
+		//	MenuParam.pfmenu =MenuOffStatus;
+		//}
+		//if (MenuParam.runFlag==1 &&ttime > tofftime)
+		//{
+		//	//tcheck = 1;
+		//	MenuParam.StartParamChange = 1;
+		//	MenuParam.pfmenu = MenuOnStatus; 
+		//	lcd_wr_char(_lcd3_run, 1);
+		//	lcd_wr_char(_lcd10_hotWater, 1);
+		//	MenuParam.runFlag ^= 0x01;
+		//}
+
+	}
+
+	if (MenuParam.StartParamChange == 1 )
+	{
+		MenuParam.StartParamChange = 0;
+		WRStartParam(1);
+		//eepSaveTimer();
+	}
 }
 
-//void eepWrOneParam(uint8_t id)
-//{
-//	uint8_t dat,reg;
-//	dat = (uint8_t)NumCoreParam[id].value;
-//	reg = 0x08 + id;
-//	AT24CXX_WriteBuff(AT24CXX, reg, &dat, 1);
-//}
+void StartParamChecErr(void)
+{
+	MenuParam.runFlag=0;
+	MenuParam.elecFlag=0;
+	MenuParam.timer.onHour=16;
+	MenuParam.timer.onMin=0;
+	MenuParam.timer.offHour=2;
+	MenuParam.timer.offMin=0;
+}
+void CheckTimer(uint8_t isWrite)
+{
+	uint16_t tontime, tofftime;
+		uint8_t k;
+	tontime = MenuParam.timer.onHour<<6 | MenuParam.timer.onMin;
+	tofftime = MenuParam.timer.offHour<<6 | MenuParam.timer.offMin;
+
+	if (tontime == tofftime)
+		k=0;
+	else
+		k=1;
+	lcd_wr_char(_lcd23_timeOn,k);
+	lcd_wr_char(_lcd24_timeOff,k);
+	if (isWrite > 0)
+	{
+		//WRStartParam(0);
+		eepSaveTimer();
+		//WRStartParam(1);
+	}
+	
+}
+
+void eepSaveTimer(void)
+{
+	uint8_t i,vadd=0;
+	uint8_t reg=0;
+	uint8_t rdPams[8]={0};
+	uint8_t wrPams[8]={0};
+
+	wrPams[0]= StartEep[0];
+	wrPams[1]= StartEep[1];
+	wrPams[2]= MenuParam.timer.onHour;
+	wrPams[3]= MenuParam.timer.onMin;
+	wrPams[4]= MenuParam.timer.offHour;
+	wrPams[5]= MenuParam.timer.offMin;
+	for (i=0;i<6; i++)
+	{
+		vadd += wrPams[i];
+	}
+	wrPams[6]=vadd;
+	//write 
+	AT24CXX_WriteBuff(AT24CXX, reg, (uint8_t*)&wrPams, 7);
+	delay_ms(1);
+	//read and check
+	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&rdPams,7);
+	for (i=0;i<7;i++)
+	{
+		if (wrPams[i] != rdPams[i])
+		{
+			break;
+		}
+	}
+
+	if (i != 7)
+	{
+		i=0;
+
+		// false then false do nothing
+		//StartParamChecErr();
+		//return ;
+	}
+}
+
+void WRStartParam(uint8_t issend)
+{
+	uint8_t i,vadd=0;
+//	uint8_t reg=0;
+//	uint8_t rdPams[8];
+	//StartParamCheck[0]= StartEep[0];
+	//StartParamCheck[1]= StartEep[1];
+	//StartParamCheck[2]= MenuParam.timer.onHour;
+	//StartParamCheck[3]= MenuParam.timer.onMin;
+	//StartParamCheck[4]= MenuParam.timer.offHour;
+	//StartParamCheck[5]= MenuParam.timer.offMin;
+	//for (i=0;i<6; i++)
+	//{
+	//	vadd += StartParamCheck[i];
+	//}
+	//StartParamCheck[6]=vadd;
+	////write 
+	//AT24CXX_WriteBuff(AT24CXX, reg, (uint8_t*)&StartParamCheck, 8);
+	//delay_ms(1);
+	////read and check
+	//AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&rdPams,8);
+
+	//for (i=0;i<8;i++)
+	//{
+	//	if (StartParamCheck[i] != rdPams[i])
+	//	{
+	//		break;
+	//	}
+	//}
+
+	//if (i != 8)
+	//{
+	//	i=0;
+	//	
+	//	// false then false do nothing
+	//	//StartParamChecErr();
+	//	//return ;
+	//}
+
+	if (issend > 0)
+	{
+		StartParamCheck[0]= StartEep[0];
+		StartParamCheck[1]= StartEep[1];
+		StartParamCheck[2]= 2;
+		StartParamCheck[3]= MenuParam.runFlag;
+		StartParamCheck[4]= MenuParam.elecFlag;
+		for(i=0;i<5; i++)
+		{
+			vadd+=StartParamCheck[i];
+		}
+		StartParamCheck[5]= vadd;
+		StartParamCheck[6]= 0xca;
+		UartDMAQueue(qUartLink,(uint8_t*)StartParamCheck,7);
+	}
+}
+
+void RequestTempe(void)
+{
+	//later than reqwater, the last bit set by seng flag,but not deal it
+	//10 s
+	UartDMAQueue(qUartLink,ReqWaterT,5);
+}
+
+
+

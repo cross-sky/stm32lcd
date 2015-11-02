@@ -50,5 +50,6 @@ void UB_Button_KeyIn(void);
 void KeyTest(void);
 uint16_t KeyPop(void);//按键读取
 void UB_Button_Init(void);//按键初始化
+uint8_t KeyPush(uint16_t tvalue);
 
 #endif

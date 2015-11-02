@@ -34,7 +34,7 @@ uint16_t KeyPop(void)
 	return tValue;
 }
 
-bool KeyPush(uint16_t tvalue)
+uint8_t KeyPush(uint16_t tvalue)
 {
 	if ((key.in+1)%KeyBuffLen == key.out)
 	{

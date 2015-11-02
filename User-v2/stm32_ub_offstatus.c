@@ -14,6 +14,8 @@ void MenuOffStatus(void)
 	case BTN_SHUT: MenuParam.pfmenu = MenuOnStatus; 
 					lcd_wr_char(_lcd3_run, 1);
 					lcd_wr_char(_lcd10_hotWater, 1);
+					MenuParam.runFlag ^= 0x01;
+					MenuParam.StartParamChange = 1;
 					break;
 	case BTN_LOCK: MenuParam.lockFlag ^= 1;break;//need to add lock ico
 	default: break;
@@ -22,6 +24,7 @@ void MenuOffStatus(void)
 	//lcd_wr_char(_lcd13_c, 1);
 	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);//lock
 	fClockOn(MenuParam.clock.hour, MenuParam.clock.min);
+	DispLayWatetT();
 	LcdSetWater(0);
 }
 
@@ -86,5 +89,45 @@ void fOffStatusPara(uint8_t Id)
 		lcd_wr_num(i, 1, 1);
 		lcd_wr_num(j, 2, 1);
 	}
+}
+
+void ReceiveWaterT(uint8_t len, uint8_t source[])
+{
+	
+}
+
+void ErrorDisplay(void)
+{
+	uint16_t keyValue=0;
+
+	keyValue = KeyPop();
+	switch(keyValue)
+	{
+	case BTN_SHUT:	MenuParam.runFlag = 0;
+					MenuParam.StartParamChange=1;
+					MenuParam.pfmenu =MenuOffStatus; 
+					//clear errors then shutdown
+
+					break;
+	case BTN_LOCK: MenuParam.lockFlag ^= 1;break;//need to add lock ico
+	default: break;
+	}
+
+	lcd_wr_num(10, 0, 1);
+	lcd_wr_num(0, 1, 1);
+	lcd_wr_num(0, 2, 1);
+	fClockOn(MenuParam.clock.hour, MenuParam.clock.min);
+	LcdSetWater(0);
+	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);//lock
+}
+
+void DispLayWatetT(void)
+{
+	uint8_t i,j;
+	i= MenuParam.WaterT/10;
+	j= MenuParam.WaterT%10;
+	lcd_wr_num(0, 0, 0);
+	lcd_wr_num(i, 1, 1);
+	lcd_wr_num(j, 2, 1);
 }
 
