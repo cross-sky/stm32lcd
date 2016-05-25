@@ -3,6 +3,7 @@
 
 // main menu handle and clock set
 void fViewCoreParam(void);
+void DisplayRecT(void);
 
 void MenuOnStatus(void)
 {
@@ -25,6 +26,7 @@ void MenuOnStatus(void)
 					MenuParam.StartParamChange=1;
 					MenuParam.pfmenu =MenuOffStatus; break;
 	case BTN_SETCORE:MenuParam.pfmenu = fViewCoreParam; lcd_wr_char(_lcd5_find,1);break;
+	case BTN_VIEWRC: MenuParam.pfmenu = DisplayRecT; lcd_wr_char(_lcd5_find,1);break;
 	default:	break;
 	}
 
@@ -128,6 +130,7 @@ void MenuSetClock(void)
 	static uint8_t numbs=0, pos=0;
 	static uint8_t thour, tmin, isFirstFlag=1;
 	static uint8_t flag_flash=0;
+	uint8_t pcf853[3] = {0};
 	if (isFirstFlag == 1)
 	{
 		thour = MenuParam.clock.hour;
@@ -179,6 +182,11 @@ void MenuSetClock(void)
 				MenuParam.clock.min = tmin;
 				isFirstFlag = 1;// 
 				fClockOn(thour, tmin);
+
+				pcf853[0]=0;
+				pcf853[1]=tmin;
+				pcf853[2]=thour;
+				Pcf8563SetTime(pcf853);
 				return ;
 			}
 			break;
@@ -465,3 +473,70 @@ void fViewCoreParam(void)
 	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
 	fOffStatusPara(Id);
 }
+
+void fRecPara(uint8_t Id)
+{
+	uint8_t i,j,m;
+	int16_t k;
+	i = Id/10;
+	j = Id%10;
+	k = RECWatreT[Id].Value;
+
+	lcd_wr_num(0, 3, 1);
+	lcd_wr_num(i, 4, 1);
+	lcd_wr_num(j, 5, 1);
+
+	if (k >= 0)
+	{
+		k = k/10;
+		m = k / 100;
+		i = k%100/10;	//第2位数字处理
+		j = k % 10;
+		lcd_wr_num(m, 0, m);
+		lcd_wr_num(i, 1, 1);
+		lcd_wr_num(j, 2, 1);
+	} 
+	else
+	{
+		k = 0 - k;
+		k = k/10;
+		i = k/10;
+		j = k % 10;
+		lcd_wr_num(10, 0, 1);
+		lcd_wr_num(i, 1, 1);
+		lcd_wr_num(j, 2, 1);
+	}
+}
+
+//查看实时温度
+void DisplayRecT(void)
+{
+	uint16_t keyValue=0;
+	static uint8_t Id=0;
+//	uint8_t i,j,k;
+
+	keyValue = KeyPop();
+	switch(keyValue)
+	{
+	case BTN_CLOCK: Id++; 
+		if (Id >= ADC_OUTLINE)
+		{
+			Id = 0;
+		}
+		break;
+	case BTN_TIMER: Id--;
+		if (Id >= 0xff)
+		{
+			Id = ADC_OUTLINE;
+		}
+		break;
+	case BTN_SHUT: MenuParam.pfmenu = MenuOnStatus;  Id=0; lcd_wr_char(_lcd5_find,0);return;
+	case BTN_LOCK:	MenuParam.lockFlag ^= 1;break;//need to add lock ico
+	default: break;
+	}
+
+	lcd_wr_char(_lcd4_lock, MenuParam.lockFlag);
+	fRecPara(Id);
+}
+
+

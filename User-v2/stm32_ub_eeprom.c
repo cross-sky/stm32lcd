@@ -6,22 +6,26 @@
 #define PAGE_NUM 32
 #define STARTPAMS 0xaf
 
-char eeprom[20]={0};
-char RdEeprom[20]={0};
-char StartParamCheck[8]={STARTPAMS};
 uint8_t renum[8]={0};
-uint8_t ReqWaterT[6]={0xfd,0xba,0x01,0,0xca};
 
-// 开关机 电加热 
-//0xfe, 0xef, 0x02, 00, 00, 校验， 结束(0xca)
-const uint8_t StartEep[2]={0xfe, 0xef};
+//startframe1 startframe2 endframe
+const uint8_t StartEep[3]={0xfe,0xef,0xca};
+
+// 开关机 电加热 手动除霜 校验  功能码到校验码
+//0xfe, 0xef, 0x05,功能码(f1)， 00, 00, 00， 校验(功能码-数字值尾)， 结束(0xca) 9
+char StartParamCheck[10]={0xfe,0xef,0x05,0xf1};//send runstatus
+
+//const uint8_t StartEep[2]={0xfe,0xef};
 const uint8_t Timertab[8]={0,1,0xcc,0,1,0xcc,0,1};
 
-// 设置参数
-//0xff,0xcc, 0x0d,13byte,校验， 结束(0xca)
+// 设置参数---
+//0xfc,0xcf, 0x0d,功能码(f2),13byte, 校验， 结束(0xca) 19
+char eeprom[20]={0xfe,0xef,0x0f,0xf2};//wr core param
+char RdEeprom[20]={0xfe,0xef,0x0f,0xf2};//rd core params
 
 //发送温度等查询
-//0xfd,0xba,0x01,校验， 结束(0xca)
+//0xfe,0xef, 0x01,功能码(f3),校验， 结束(0xca) 6
+uint8_t ReqWaterT[7]={0xfe,0xef,0x02,0xf3,0xf5,0xca};
 
 uint8_t eepRdCoreParam(void);
 void RequestTempe(void);
@@ -173,7 +177,7 @@ void AT24CXX_ReadBuffer(uint8_t dev, uint8_t reg, uint8_t *Buffer, uint16_t Leng
 
 void AT24CxxTest(void)
 {
-	uint8_t len;
+//	uint8_t len;
 //	uint8_t wrnum[6]={3,1,5};	
 	uint8_t reg=0x00;
 	uint8_t i,vadd=0;
@@ -207,6 +211,7 @@ void AT24CxxTest(void)
 		MenuParam.timer.onMin=renum[3];
 		MenuParam.timer.offHour=renum[4];
 		MenuParam.timer.offMin=renum[5];
+		//eepWRCoreParam(); //强制写入coreparams
 		i=eepRdCoreParam();	
 		//eepRdCoreParam();
 #ifdef Debug
@@ -241,18 +246,22 @@ void AT24CxxTest(void)
 uint8_t eepRdCoreParam(void)
 {
 	uint8_t reg=0x08,i,j=0,vadd=0;
-	uint8_t len=CoreParamsMax+3;
+	uint8_t len=CoreParamsMax+4;
 	//uint8_t len = CoreParamsMax<<1;
-	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&RdEeprom[3], CoreParamsMax+1);//############
-	RdEeprom[0]=0xff;
-	RdEeprom[1]=0xcc;//start(2) + 1 +13 + check(1)+ end(1) = 18
+	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&RdEeprom[4], CoreParamsMax+1);//############
+	//0xfe,0xef, 0x0f,功能码(f2),13byte,校验3-16， 结束(0xca) 19
+	/*RdEeprom[0]=StartEep[0];
+	RdEeprom[1]=StartEep[1];
 	RdEeprom[2]=CoreParamsMax;
+	RdEeprom[3]=0xf2;*/
+	//vadd += CoreParamsMax;
+	vadd += 0xf2;
 
-	for(i=3; i<len; i++)
+	for(i=4; i<len; i++)
 	{
 		//high level ffront, low level back
 		NumCoreParam[j].value = (int8_t)RdEeprom[i]; 
-		vadd += RdEeprom[i];
+		vadd += (uint8_t)RdEeprom[i];
 		j++;
 	}
 	if (RdEeprom[i] != vadd)
@@ -260,8 +269,8 @@ uint8_t eepRdCoreParam(void)
 		return FALSE;
 	}
 	RdEeprom[i] = vadd;
-	RdEeprom[17] = 0xca;
-	UartDMAQueue(qUartLink,(uint8_t*)RdEeprom,18);//send i+1 13+5
+	RdEeprom[18] = StartEep[2];
+	UartDMAQueue(qUartLink,(uint8_t*)RdEeprom,19);//send i+1 13+5 a
 	return TRUE;
 }
 
@@ -270,26 +279,32 @@ uint8_t eepWRCoreParam(void)
 	//save and send
 	uint8_t checkPams[20]={0};
 	uint8_t reg=0x08,i,j=0,vadd=0;
-	uint8_t len=CoreParamsMax+3;
-	for (i=3; i<len; i++)
+	uint8_t len=CoreParamsMax+4;
+	
+	//vadd += CoreParamsMax;
+	vadd += 0xf2;	
+	for (i=4; i<len; i++)
 	{
 		eeprom[i] =  (uint8_t)NumCoreParam[j].value;
-		vadd += eeprom[i];
+		vadd += (uint8_t)eeprom[i];
 		j++;
 	}
 
-	eeprom[0]=0xff;
-	eeprom[1]=0xcc;
-	eeprom[2]=CoreParamsMax;
-	eeprom[i]=vadd;
-	eeprom[17]=0xca;
-	UartDMAQueue(qUartLink,(uint8_t*)eeprom,18);//send i+1 13+5
 
-	AT24CXX_WriteBuff(AT24CXX, reg, (uint8_t*)&eeprom[3], CoreParamsMax+1);//########
+	/*eeprom[0]=StartEep[0];
+	eeprom[1]=StartEep[1];
+	eeprom[2]=CoreParamsMax;
+	eeprom[3]=0xf2;*/
+
+	eeprom[i]=vadd;
+	eeprom[18]=StartEep[2];
+	UartDMAQueue(qUartLink,(uint8_t*)eeprom,19);//send i+1 13+5 a2
+
+	AT24CXX_WriteBuff(AT24CXX, reg, (uint8_t*)&eeprom[4], CoreParamsMax+1);//########
 	delay_ms(1);
-	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&checkPams[3], CoreParamsMax+1);//############
+	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&checkPams[4], CoreParamsMax+1);//############
 	//len=CoreParamsMax+3;
-	for(i=3;i<len;i++)
+	for(i=4;i<len;i++)
 	{
 		if (eeprom[i] != checkPams[i])
 		{
@@ -312,7 +327,7 @@ void TaskSendStartParm(void)
 	static uint8_t tcheck=0, tlastcheck=0;
 	uint8_t k;
 	i++;
-	if (i>= 10)
+	if (i>= 5)
 	{
 		i=0;
 		RequestTempe();//10s 
@@ -325,6 +340,7 @@ void TaskSendStartParm(void)
 			return ;
 		}
 
+		//开关机确认
 		k = (tontime>tofftime)<<2 |(ttime > tofftime)<<1 | (ttime > tontime);
 		tcheck = Timertab[k];
 
@@ -338,8 +354,8 @@ void TaskSendStartParm(void)
 			}
 			else
 			{
-				KeyPush(BTN_SHUT);
-				KeyPush(BTN_SHUT);
+				KeyPush(BTN_SHUT);//第一次退出设置层(最多2层)
+				KeyPush(BTN_SHUT);//关机就进入开机 开机就进入关机
 			}
 			MenuParam.beepFlag = 1;
 		}
@@ -414,8 +430,8 @@ void eepSaveTimer(void)
 	uint8_t rdPams[8]={0};
 	uint8_t wrPams[8]={0};
 
-	wrPams[0]= StartEep[0];
-	wrPams[1]= StartEep[1];
+	wrPams[0]= 0xfb;
+	wrPams[1]= 0xcf;
 	wrPams[2]= MenuParam.timer.onHour;
 	wrPams[3]= MenuParam.timer.onMin;
 	wrPams[4]= MenuParam.timer.offHour;
@@ -487,20 +503,24 @@ void WRStartParam(uint8_t issend)
 	//	//return ;
 	//}
 
+	// 开关机 电加热 
+	//0xfe, 0xef, 0x04,功能码(f1)， 00, 00, 校验(功能码3-数据结尾)， 结束(0xca)
 	if (issend > 0)
 	{
-		StartParamCheck[0]= StartEep[0];
-		StartParamCheck[1]= StartEep[1];
-		StartParamCheck[2]= 2;
-		StartParamCheck[3]= MenuParam.runFlag;
-		StartParamCheck[4]= MenuParam.elecFlag;
-		for(i=0;i<5; i++)
+		//StartParamCheck[0]= StartEep[0];
+		//StartParamCheck[1]= StartEep[1];
+		//StartParamCheck[2]= 2;
+		//StartParamCheck[3]= 0xf1;
+		StartParamCheck[4]= MenuParam.runFlag;
+		StartParamCheck[5]= MenuParam.elecFlag;
+		StartParamCheck[6]= MenuParam.defrostManul;
+		for(i=3;i<7; i++)
 		{
 			vadd+=StartParamCheck[i];
 		}
-		StartParamCheck[5]= vadd;
-		StartParamCheck[6]= 0xca;
-		UartDMAQueue(qUartLink,(uint8_t*)StartParamCheck,7);
+		StartParamCheck[7]= vadd;
+		StartParamCheck[8]= StartEep[2];
+		UartDMAQueue(qUartLink,(uint8_t*)StartParamCheck,9);
 	}
 }
 
@@ -508,8 +528,44 @@ void RequestTempe(void)
 {
 	//later than reqwater, the last bit set by seng flag,but not deal it
 	//10 s
-	UartDMAQueue(qUartLink,ReqWaterT,5);
+	UartDMAQueue(qUartLink,ReqWaterT,6);
 }
 
+uint8_t RecevWartT(uint8_t len, uint8_t Rcdata[])
+{
+	/*
+	uint8_t i,vadd=0,j=4;
+	len -= 2;//
+
+	for (i=0; i<5; i++)
+	{
+		//温度状态 0-负数 1-正数 2-开路 3-短路
+		switch(Rcdata[j])
+		{
+		case 0: RECWatreT[i].Value = 0 - Rcdata[j+1]|((uint16_t)Rcdata[j+2]<<8); RECWatreT[i].errFlag = 0; break;
+		case 1: RECWatreT[i].Value =  Rcdata[j+1] | ((uint16_t)Rcdata[j+2]<<8); RECWatreT[i].errFlag = 0;break;
+		case 2: RECWatreT[i].errFlag = OenT; break;
+		case 3: RECWatreT[i].errFlag = ShortT; break;
+		default:break;
+		}
+		j+=3;
+	}
+	return TRUE;
+	*/
+
+	uint8_t i,j=4;
+	uint16_t adcDectectState=Rcdata[34]<<8 | Rcdata[35];
+	//4-32
+	for(i=0;i<ADC_OUTLINE;i++)
+	{
+		RECWatreT[i].Value=(int16_t)((uint16_t)Rcdata[j]<<8 | Rcdata[j+1]);
+		RECWatreT[i].errFlag=(adcDectectState>>i)&0x01;
+		j+=2;
+	}
+	//
+	RECWatreT[ADC_OUTLINE].Value = adcDectectState;
+
+	return TRUE;
+}
 
 

@@ -28,20 +28,22 @@ void TaskInit(void)
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 	MenuParaInit();		//init params
 	UB_LED_Init();		//PC1,PC3,PC13  ok	
-	SystickInit();
 
 	
 	//UART1_Init(BoundSet);
 	UART1_Init();
 	IIC_Init();
-
-
+	SystickInit();
+	delay_ms(100);
+	
+	
 	//RTtest();
 	AT24CxxTest();
 	PCF8563Init();
 	Lcd1621Init();
 	UB_Button_Init();	//key init pa0-pa5;
-	
+	RequestTempe();
+	//@@@@@@@@@显示板要延时一点才启动，不过也没关系，后面有重发
 }
 
 

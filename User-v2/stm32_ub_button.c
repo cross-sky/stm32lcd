@@ -1,3 +1,5 @@
+//http://mikrocontroller.bplaced.net/wordpress/?page_id=456
+
 #include "cominc.h"
 
 BUTTON_t BUTTON[]={
@@ -131,6 +133,7 @@ void UB_Button_KeyIn(void)
 		case BTN_UP:	key_status=BTN_UP;	break;
 		case BTN_LOCK:	key_status=BTN_LOCK;	break;
 		case BTN_SETCORE:key_status=BTN_SETCORE;break;
+		case BTN_VIEWRC: key_status = BTN_VIEWRC; break;
 		default:	key_status=BTN_NULL;	break;
 		}
 

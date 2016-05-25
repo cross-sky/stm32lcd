@@ -14,4 +14,6 @@ void WRStartParam(uint8_t issend);
 void TaskSendStartParm(void);
 void CheckTimer(uint8_t isWrite);
 void eepSaveTimer(void);
+uint8_t RecevWartT(uint8_t len, uint8_t Rcdata[]);
+void RequestTempe(void);
 #endif
