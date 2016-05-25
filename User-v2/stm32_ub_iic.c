@@ -6,7 +6,7 @@ char iic[16];
 //
 void IIC_Init(void)
 {
-	uint8_t len;
+//	uint8_t len;
 	GPIO_InitTypeDef gpio_init_structure;
 	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB, ENABLE);
 

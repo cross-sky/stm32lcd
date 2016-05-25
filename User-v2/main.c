@@ -15,7 +15,7 @@ int main(void)
 {	
 	/* ≥ı ºªØ */;
 //=======
-	TaskInit();
+ 	TaskInit();
 	
 	while (1)
 	{

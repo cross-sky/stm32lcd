@@ -114,6 +114,9 @@
     <ClCompile Include="..\stm32_ub_wdog.c">
       <Filter>源文件\USER</Filter>
     </ClCompile>
+    <ClCompile Include="..\RT_data.c">
+      <Filter>源文件\USER</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\CMSIS\startup\startup_stm32f10x_md.s">
@@ -168,6 +171,9 @@
     </ClInclude>
     <ClInclude Include="..\stm32_ub_dma_usart1.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RT_data.h">
+      <Filter>源文件\USER</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

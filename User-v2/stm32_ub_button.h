@@ -1,6 +1,8 @@
 #ifndef __STM32_UB_BUTTON_H
 #define __STM32_UB_BUTTON_H
 
+#include "stm32f10x.h"
+
 typedef enum
 {
 	BTN_USER = 0,
@@ -18,7 +20,9 @@ typedef enum
 	BTN_UP =	0x0020,	//	k6
 
 	BTN_LOCK =	0x0021,	//lock
-	BTN_SETCORE = 0x0012 // 1.add key 2.add key_status
+	BTN_SETCORE = 0x0012, // 1.add key 2.add key_status
+	BTN_VIEWRC = 0x0030,		//
+	BTN_DEFROSTMANUL=0x0014,	//关机状态，手动除霜，除霜后关机
 //	BTN_RIGHT_CON = 0x1080,
 //	BTN_LEFT_CON = 0x1100
 

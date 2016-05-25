@@ -1,7 +1,7 @@
 #ifndef __STM32_UB_MENU_H
 #define __STM32_UB_MENU_H
 
-
+#include "stm32f10x.h"
 
 //#define BgledOn GPIOA->BSRR = GPIO_Pin_7
 //#define BgledOff GPIOA->BRR = GPIO_Pin_7
@@ -21,6 +21,6 @@ void fSubCoreParam(uint8_t id);
 
 void LcdSetWater(uint8_t id);
 void fClockOn(uint8_t hour, uint8_t min);
-
+void DisplayRecT(void);
 #endif
 
