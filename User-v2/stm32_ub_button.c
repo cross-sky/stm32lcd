@@ -134,6 +134,7 @@ void UB_Button_KeyIn(void)
 		case BTN_LOCK:	key_status=BTN_LOCK;	break;
 		case BTN_SETCORE:key_status=BTN_SETCORE;break;
 		case BTN_VIEWRC: key_status = BTN_VIEWRC; break;
+		case BTN_DEFROSTMANUL: key_status = BTN_DEFROSTMANUL; break;	
 		default:	key_status=BTN_NULL;	break;
 		}
 
