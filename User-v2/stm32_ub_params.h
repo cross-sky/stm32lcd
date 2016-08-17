@@ -3,7 +3,7 @@
 
 #include "stm32f10x.h"
 
-#define CoreParamsMax 7
+#define CoreParamsMax 8
 
 #define ShortT 3
 #define OenT 2

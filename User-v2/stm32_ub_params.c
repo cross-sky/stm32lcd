@@ -3,6 +3,7 @@
 stuLcdParams MenuParam;
 
 //1.coreparams=7 
+//1.修改CoreParamsMax，2.增加数组NumCoreParam，
 stuCoreParam NumCoreParam[CoreParamsMax]={
 	//id,flag value max min
 	{0, 0, 50,	70,	30},	//设置水温
@@ -12,6 +13,7 @@ stuCoreParam NumCoreParam[CoreParamsMax]={
 	{4, 0, 10,	15, 5},		//退出除霜温度
 	{5, 0, 5,	8, 2},		//除霜周期	30分钟为倍数
 	{6, 0, 3,	5, 0},		//除霜进入偏差	
+	{7, 0, 20,	50, 18},		//排气-水温插值，补气控制
 	//{7, 0, -7,  0, -30},
 	//{8, 0, 13,	30, 2},
 	//{9, 0, 8,	12, 1},

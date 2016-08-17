@@ -19,9 +19,10 @@ char StartParamCheck[10]={0xfe,0xef,0x05,0xf1};//send runstatus
 const uint8_t Timertab[8]={0,1,0xcc,0,1,0xcc,0,1};
 
 // 设置参数---
+
 //0xfc,0xcf, 0x0d,功能码(f2),13byte, 校验， 结束(0xca) 19
-char eeprom[20]={0xfe,0xef,0x0f,0xf2};//wr core param
-char RdEeprom[20]={0xfe,0xef,0x0f,0xf2};//rd core params
+char eeprom[20]={0xfe,0xef,CoreParamsMax+2,0xf2};//wr core param
+char RdEeprom[20]={0xfe,0xef,CoreParamsMax+2,0xf2};//rd core params
 
 //发送温度等查询
 //0xfe,0xef, 0x01,功能码(f3),校验， 结束(0xca) 6
@@ -255,7 +256,7 @@ uint8_t eepRdCoreParam(void)
 	RdEeprom[2]=CoreParamsMax;
 	RdEeprom[3]=0xf2;*/
 	//vadd += CoreParamsMax;
-	vadd += 0xf2;
+	//vadd += 0xf2;
 
 	for(i=4; i<len; i++)
 	{
@@ -270,7 +271,7 @@ uint8_t eepRdCoreParam(void)
 	}
 	RdEeprom[i] = vadd+eeprom[2]+eeprom[3];
 	RdEeprom[i+1] = StartEep[2];
-	UartDMAQueue(qUartLink,(uint8_t*)RdEeprom,i+1);//send i+1 13+5 a
+	UartDMAQueue(qUartLink,(uint8_t*)RdEeprom,i+2);//send i+1 13+5 a
 	return TRUE;
 }
 
@@ -280,9 +281,10 @@ uint8_t eepWRCoreParam(void)
 	uint8_t checkPams[20]={0};
 	uint8_t reg=0x08,i,j=0,vadd=0;
 	uint8_t len=CoreParamsMax+4;
+	uint8_t tvadd;
 	
 	//vadd += CoreParamsMax;
-	vadd += 0xf2;	
+	//vadd += 0xf2;	
 	for (i=4; i<len; i++)
 	{
 		eeprom[i] =  (uint8_t)NumCoreParam[j].value;
@@ -295,14 +297,13 @@ uint8_t eepWRCoreParam(void)
 	eeprom[1]=StartEep[1];
 	eeprom[2]=CoreParamsMax;
 	eeprom[3]=0xf2;*/
+	tvadd = vadd;
 
-	eeprom[i]=vadd+eeprom[2]+eeprom[3];
-	eeprom[i+1]=StartEep[2];
-	UartDMAQueue(qUartLink,(uint8_t*)eeprom,i+1);//send i+1 13+5 a2
-
+	eeprom[i]=tvadd;
 	AT24CXX_WriteBuff(AT24CXX, reg, (uint8_t*)&eeprom[4], CoreParamsMax+1);//########
 	delay_ms(1);
 	AT24CXX_ReadBuffer(AT24CXX, reg, (uint8_t*)&checkPams[4], CoreParamsMax+1);//############
+	
 	//len=CoreParamsMax+3;
 	for(i=4;i<len;i++)
 	{
@@ -311,6 +312,11 @@ uint8_t eepWRCoreParam(void)
 			break;
 		}
 	}
+	
+	eeprom[i]=vadd+eeprom[2]+eeprom[3];
+	eeprom[i+1]=StartEep[2];
+	UartDMAQueue(qUartLink,(uint8_t*)eeprom,i+2);//send i+1 13+5 a2
+	
 	if (i!= len)
 	{
 		return FALSE;

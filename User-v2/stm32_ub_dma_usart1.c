@@ -178,11 +178,24 @@ void Usart1HandleV2(void)
 		DataLen = FIFO_SIZE - DMA_GetCurrDataCounter(DMA1_Ch_Usart1_Rx);
 		buf=&RxBuffer2[0];
 
-		if (*(buf)!=0xfe)
+		for (i=0; i<((DataLen>>1) + 1); i++)
+	{
+		if (*(buf)==0xfe && *(buf+1)==0xef)
+		{
+			break;
+		}
+		else
 		{
 			buf+=1;
 			DataLen-=1;
 		}
+	}
+
+//		if (*(buf)!=0xfe)
+//		{
+//			buf+=1;
+//			DataLen-=1;
+//		}
 
 		if (DataLen > 0)
 		{
