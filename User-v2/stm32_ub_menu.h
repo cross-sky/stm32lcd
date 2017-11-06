@@ -21,6 +21,6 @@ void fSubCoreParam(uint8_t id);
 
 void LcdSetWater(uint8_t id);
 void fClockOn(uint8_t hour, uint8_t min);
-
+void DisplayRecT(void);
 #endif
 

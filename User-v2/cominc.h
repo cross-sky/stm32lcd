@@ -31,7 +31,7 @@ typedef enum {FALSE = 0, TRUE = 1} bool;
 
 //#define False 0;
 //#define True 1;
-#define Debug 1;
+//#define Debug 1;
 
 
 #endif

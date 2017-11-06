@@ -24,7 +24,7 @@
 #define FIFO_SIZE              64
 #define TxFIFOSIZE              128//0x7f
 
-#define Bounds	115200
+#define Bounds	9600
 
 typedef struct UART_QNode{
 	uint8_t		*Addr_8U;

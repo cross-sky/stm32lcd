@@ -177,13 +177,13 @@ void Usart1HandleV2(void)
 		DataLen = FIFO_SIZE - DMA_GetCurrDataCounter(DMA1_Ch_Usart1_Rx);
 		if (DataLen > 0)
 		{
-			if (RxBuffer2[0]==0xfc && RxBuffer2[1]==0xcf)
+			if (RxBuffer2[0]==0xfe && RxBuffer2[1]==0xef)
 			{
 				i = RxBuffer2[3];//f3 addr[3]
 				switch (i)
 				{
 					//run elec
-				case 0xf1: DmaSendFlag = i;//f=addr[3]
+				case 0xf1: DmaReceFlag = i;//f=addr[3]
 					break;
 					//set params
 				case 0xf2: DmaReceFlag = i;//f=addr[3]
@@ -191,6 +191,7 @@ void Usart1HandleV2(void)
 					//request warterT
 				case 0xf3: DmaReceFlag = i;//f=addr[3]
 					//........
+					RecevWartT(DataLen, RxBuffer2);
 					break;
 				default:break;
 				}
@@ -383,6 +384,7 @@ void UartDmaSendV2(void)
 		if (DmaSendFlag == DmaReceFlag)
 		{
 			//dequeue data, has receive data, then send next data
+			RECWatreT[ADC_OUTLINE].errFlag =0;
 			UART_DEQueue(qUartLink, &e);//出队
 			DmaReceFlag = 0;//reset receflag
 			DmaSendFlag = 1;//reset send flag;
@@ -402,9 +404,14 @@ void UartDmaSendV2(void)
 				{
 					//error on uart,can not receive data from board
 					resendTimes = 0;
+					RECWatreT[ADC_OUTLINE].errFlag = OutLine;
 					lcd_wr_char(_lcd3_run, 0); 
 					lcd_wr_char(_lcd10_hotWater, 0);
 					MenuParam.pfmenu = ErrorDisplay;
+					//send next
+					UART_DEQueue(qUartLink, &e);//出队
+					DmaReceFlag = 0;//reset receflag
+					DmaSendFlag = 1;//reset send flag;
 				}
 			}
 		}
@@ -423,6 +430,8 @@ void UartDmaSendV2(void)
 	}
 
 }
+
+
 
 //void TxPop(uint8_t len)
 //{
